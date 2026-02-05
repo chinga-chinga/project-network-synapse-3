@@ -7,6 +7,57 @@
 
 ---
 
+## Generate Github SSH Keys
+
+#Run these commands on your remote machine (synapse-vm-01):
+#Generate a new SSH key:
+bash
+ssh-keygen
+#(Press Enter to accept defaults usually)
+#View your public key:
+bash
+cat ~/.ssh/id_rsa.pub
+#Add to GitHub:
+#Copy the output starting with ssh-ed25519 ...
+#Go to GitHub SSH Settings
+#Click New SSH key, give it a Title (e.g., "GCP VM"), and paste the key.
+#Clone using SSH:
+bash
+git clone git@github.com:chinga-chinga/project-network-synapse-3.git
+
+# UV
+
+# Install UV
+
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Restart Shell
+
+exec $SHELL
+
+# Ensure you are in the right UV project
+
+uv sync
+source .venv/bin/activate
+
+# External Libraries
+
+## Schema Library
+
+We use the [OpsMill Schema Library](https://github.com/opsmill/schema-library) to provide standard infrastructure schemas (e.g. for servers, circuits). This is included as a git submodule.
+
+To add the library (reference):
+
+```bash
+git submodule add https://github.com/opsmill/schema-library.git library/schema-library
+```
+
+To initialize or update the library (downloads files to `library/schema-library`):
+
+```bash
+git submodule update --init --recursive
+```
+
 ## Monitoring resources
 
 free -h
