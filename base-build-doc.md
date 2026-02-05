@@ -54,9 +54,22 @@ git submodule add https://github.com/opsmill/schema-library.git library/schema-l
 
 To initialize or update the library (downloads files to `library/schema-library`):
 
-```bash
+````bash
 git submodule update --init --recursive
-```
+
+# Generate Infrahub Auth Key from UI then export it
+export INFRAHUB_ADDRESS="http://localhost:8000"
+export INFRAHUB_API_TOKEN="<YOUR_TOKEN>"
+
+# Load the base schema
+infrahubctl schema load ~/projects/project-network-synapse-3/library/schema-library/base
+
+# Load an extension
+infrahubctl schema load ~/projects/project-network-synapse-3/library/schema-library/extensions/location_minimal
+
+# Load another extension
+infrahubctl schema load ~/projects/project-network-synapse-3/library/schema-library/extensions/vlan
+
 
 ## Monitoring resources
 
@@ -72,7 +85,7 @@ Ensure your Google Cloud CLI is targeting the correct project.
 
 ```bash
 gcloud config set project project-network-synapse
-```
+````
 
 ### 2. Optimize Network for Tailscale
 
