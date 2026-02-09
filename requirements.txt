@@ -1,0 +1,4 @@
+infrahub-sdk[ctl]>=1.18.1
+temporalio>=1.5.0
+jinja2>=3.1.0
+pytest>=8.0.0

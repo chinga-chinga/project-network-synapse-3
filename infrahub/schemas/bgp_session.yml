@@ -1,0 +1,31 @@
+# Infrahub schema: BGP Session
+---
+version: "1.0"
+nodes:
+  - name: BGPSession
+    namespace: Network
+    label: "BGP Session"
+    attributes:
+      - name: local_asn
+        kind: Number
+      - name: remote_asn
+        kind: Number
+      - name: local_ip
+        kind: IPHost
+      - name: remote_ip
+        kind: IPHost
+      - name: session_type
+        kind: Text
+        enum:
+          - ebgp
+          - ibgp
+      - name: enabled
+        kind: Boolean
+        default_value: true
+    relationships:
+      - name: local_device
+        peer: NetworkDevice
+        cardinality: one
+      - name: remote_device
+        peer: NetworkDevice
+        cardinality: one

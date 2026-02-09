@@ -1,0 +1,26 @@
+# Infrahub schema: Network Interface
+---
+version: "1.0"
+nodes:
+  - name: NetworkInterface
+    namespace: Network
+    label: "Network Interface"
+    attributes:
+      - name: name
+        kind: Text
+      - name: description
+        kind: Text
+        optional: true
+      - name: enabled
+        kind: Boolean
+        default_value: true
+      - name: ip_address
+        kind: IPHost
+        optional: true
+      - name: mtu
+        kind: Number
+        default_value: 9214
+    relationships:
+      - name: device
+        peer: NetworkDevice
+        cardinality: one

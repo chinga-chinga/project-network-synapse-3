@@ -1,0 +1,15 @@
+{# Arista EOS BGP configuration template #}
+router bgp {{ local_asn }}
+   router-id {{ router_id }}
+{% for session in bgp_sessions %}
+   neighbor {{ session.remote_ip }} remote-as {{ session.remote_asn }}
+   neighbor {{ session.remote_ip }} description {{ session.description | default('') }}
+{% if session.session_type == 'ebgp' %}
+   neighbor {{ session.remote_ip }} ebgp-multihop 2
+{% endif %}
+{% endfor %}
+   !
+   address-family ipv4
+{% for session in bgp_sessions %}
+      neighbor {{ session.remote_ip }} activate
+{% endfor %}

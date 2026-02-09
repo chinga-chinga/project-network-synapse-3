@@ -1,0 +1,25 @@
+# Infrahub schema: Network Device
+---
+version: "1.0"
+nodes:
+  - name: NetworkDevice
+    namespace: Network
+    label: "Network Device"
+    attributes:
+      - name: hostname
+        kind: Text
+        unique: true
+      - name: platform
+        kind: Text
+      - name: role
+        kind: Text
+        enum:
+          - spine
+          - leaf
+          - border
+      - name: management_ip
+        kind: IPHost
+    relationships:
+      - name: interfaces
+        peer: NetworkInterface
+        cardinality: many

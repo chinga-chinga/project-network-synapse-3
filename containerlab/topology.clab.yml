@@ -1,0 +1,27 @@
+# Spine-leaf topology definition for Containerlab
+name: spine-leaf-lab
+
+topology:
+  kinds:
+    ceos:
+      image: ceos:latest
+
+  nodes:
+    spine1:
+      kind: ceos
+    spine2:
+      kind: ceos
+    leaf1:
+      kind: ceos
+    leaf2:
+      kind: ceos
+    leaf3:
+      kind: ceos
+
+  links:
+    - endpoints: ["spine1:eth1", "leaf1:eth1"]
+    - endpoints: ["spine1:eth2", "leaf2:eth1"]
+    - endpoints: ["spine1:eth3", "leaf3:eth1"]
+    - endpoints: ["spine2:eth1", "leaf1:eth2"]
+    - endpoints: ["spine2:eth2", "leaf2:eth2"]
+    - endpoints: ["spine2:eth3", "leaf3:eth2"]

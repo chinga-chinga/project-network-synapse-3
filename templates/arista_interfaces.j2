@@ -1,0 +1,18 @@
+{# Arista EOS interface configuration template #}
+{% for interface in interfaces %}
+interface {{ interface.name }}
+{% if interface.description %}
+   description {{ interface.description }}
+{% endif %}
+{% if interface.ip_address %}
+   no switchport
+   ip address {{ interface.ip_address }}
+{% endif %}
+   mtu {{ interface.mtu | default(9214) }}
+{% if interface.enabled %}
+   no shutdown
+{% else %}
+   shutdown
+{% endif %}
+!
+{% endfor %}

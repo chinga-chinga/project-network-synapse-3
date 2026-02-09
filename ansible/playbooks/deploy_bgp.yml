@@ -1,0 +1,9 @@
+---
+- name: Deploy BGP configuration
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Deploy BGP config
+      arista.eos.eos_config:
+        src: "{{ config_file }}"
