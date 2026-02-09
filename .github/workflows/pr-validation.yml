@@ -1,9 +1,18 @@
-# CI — runs on push to develop (superset of PR validation)
-name: CI
+# PR validation — quality gates for every pull request
+name: PR Validation
 
 on:
-  push:
-    branches: [develop]
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "**.py"
+      - "**.yml"
+      - "**.yaml"
+      - "**.j2"
+      - "**.json"
+      - "playbooks/**"
+      - "schemas/**"
+      - "templates/**"
 
 jobs:
   code-quality:
@@ -107,24 +116,27 @@ jobs:
           name: test-results
           path: test-results.xml
 
-  integration-tests:
-    name: Integration Tests
+  pr-summary:
+    name: PR Summary
     runs-on: ubuntu-latest
-    needs: [unit-tests]
-    # TODO: Add Infrahub and Containerlab integration tests in Week 3
-    continue-on-error: true
+    needs: [code-quality, security-scanning, unit-tests]
+    if: always()
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-
-      - name: Install dependencies
+      - name: Check job results
         run: |
-          pip install -r requirements.txt -r requirements-dev.txt
+          echo "## PR Validation Summary"
+          echo ""
+          echo "| Job | Status |"
+          echo "|-----|--------|"
+          echo "| Code Quality | ${{ needs.code-quality.result }} |"
+          echo "| Security Scanning | ${{ needs.security-scanning.result }} |"
+          echo "| Unit Tests | ${{ needs.unit-tests.result }} |"
+          echo ""
 
-      - name: Run integration tests
-        run: |
-          pytest tests/integration/ -v --timeout=300
+          if [[ "${{ needs.code-quality.result }}" == "failure" ]] || \
+             [[ "${{ needs.unit-tests.result }}" == "failure" ]]; then
+            echo "❌ Required jobs failed — blocking merge."
+            exit 1
+          fi
+
+          echo "✅ All required checks passed."
