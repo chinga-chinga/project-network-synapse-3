@@ -1,13 +1,30 @@
-# Python-generated files
+# Python
 __pycache__/
-*.py[oc]
-build/
+*.py[cod]
+*.egg-info/
 dist/
+build/
+.eggs/
 wheels/
-*.egg-info
+venv/
+.venv/
 
-# Virtual environments
-.venv
+# Testing
+htmlcov/
+.coverage
+*.xml
+report.html
 
-# Environment variables
+# IDE
+.vscode/
+.idea/
+
+# Project specific
+*.log
 .env
+.secrets
+bandit-report.json
+bandit-results.sarif
+
+# Containerlab
+clab-*/
