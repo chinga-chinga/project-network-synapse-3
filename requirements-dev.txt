@@ -13,6 +13,10 @@ pylint>=3.0.0
 mypy>=1.8.0
 bandit[toml]>=1.7.0
 
+# Secrets detection
+detect-secrets>=1.5.0
+pre-commit>=4.0.0
+
 # Type stubs
 types-PyYAML
 types-requests
