@@ -1,27 +1,24 @@
-# Spine-leaf topology definition for Containerlab
+# Spine-leaf topology definition for Containerlab — Nokia SR Linux
 name: spine-leaf-lab
 
 topology:
   kinds:
-    ceos:
-      image: ceos:latest
+    nokia_srlinux:
+      image: ghcr.io/nokia/srlinux:latest
 
   nodes:
-    spine1:
-      kind: ceos
-    spine2:
-      kind: ceos
-    leaf1:
-      kind: ceos
-    leaf2:
-      kind: ceos
-    leaf3:
-      kind: ceos
+    spine01:
+      kind: nokia_srlinux
+      type: ixrd3
+    leaf01:
+      kind: nokia_srlinux
+      type: ixrd2
+    leaf02:
+      kind: nokia_srlinux
+      type: ixrd2
 
   links:
-    - endpoints: ["spine1:eth1", "leaf1:eth1"]
-    - endpoints: ["spine1:eth2", "leaf2:eth1"]
-    - endpoints: ["spine1:eth3", "leaf3:eth1"]
-    - endpoints: ["spine2:eth1", "leaf1:eth2"]
-    - endpoints: ["spine2:eth2", "leaf2:eth2"]
-    - endpoints: ["spine2:eth3", "leaf3:eth2"]
+    - endpoints: ["spine01:e1-1", "leaf01:e1-49"]
+    - endpoints: ["spine01:e1-2", "leaf02:e1-49"]
+    - endpoints: ["spine01:e1-3", "leaf01:e1-50"]
+    - endpoints: ["spine01:e1-4", "leaf02:e1-50"]

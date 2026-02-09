@@ -1,9 +1,23 @@
 [project]
 name = "project-network-synapse-3"
 version = "0.1.0"
-description = "Add your description here"
+description = "Network automation with Infrahub, Temporal, and Nokia SR Linux"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "infrahub-sdk[ctl]>=1.18.1",
 ]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+extend-exclude = "library/"
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_glob = ["library/*"]
+
+[tool.bandit]
+exclude_dirs = ["tests", "venv"]
+skips = ["B101"]  # Allow assert in tests
