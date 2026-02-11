@@ -1,4 +1,8 @@
 # Spine-leaf topology definition for Containerlab — Nokia SR Linux
+# Deployed on: synapse-vm-01 (GCP us-central1-a)
+# Management network: 172.20.20.0/24 (DHCP assigned by clab)
+# Deploy: sudo containerlab deploy --topo topology.clab.yml
+# Destroy: sudo containerlab destroy --topo topology.clab.yml
 name: spine-leaf-lab
 
 topology:
@@ -9,13 +13,13 @@ topology:
   nodes:
     spine01:
       kind: nokia_srlinux
-      type: ixrd3
+      type: ixr-d3
     leaf01:
       kind: nokia_srlinux
-      type: ixrd2
+      type: ixr-d2
     leaf02:
       kind: nokia_srlinux
-      type: ixrd2
+      type: ixr-d2
 
   links:
     - endpoints: ["spine01:e1-1", "leaf01:e1-49"]
