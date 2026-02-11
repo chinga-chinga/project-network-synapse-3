@@ -47,6 +47,7 @@ except ImportError:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def get_project_root() -> Path:
     """Find the project root directory."""
     current = Path(__file__).resolve()
@@ -156,12 +157,16 @@ def get_or_create(
 # Population functions
 # ---------------------------------------------------------------------------
 
+
 def populate_manufacturer(client: httpx.Client, base_url: str, seed: dict) -> str:
     """Create the Nokia manufacturer."""
     mfg = seed["manufacturer"]
     return get_or_create(
-        client, base_url,
-        "OrganizationManufacturer", "name", mfg["name"],
+        client,
+        base_url,
+        "OrganizationManufacturer",
+        "name",
+        mfg["name"],
         {"name": {"value": mfg["name"]}, "description": {"value": mfg["description"]}},
         label=f"Manufacturer: {mfg['name']}",
     )
@@ -171,8 +176,11 @@ def populate_location(client: httpx.Client, base_url: str, seed: dict) -> str:
     """Create the lab location."""
     loc = seed["location"]
     return get_or_create(
-        client, base_url,
-        "LocationSite", "name", loc["name"],
+        client,
+        base_url,
+        "LocationSite",
+        "name",
+        loc["name"],
         {
             "name": {"value": loc["name"]},
             "shortname": {"value": loc["shortname"]},
@@ -182,14 +190,15 @@ def populate_location(client: httpx.Client, base_url: str, seed: dict) -> str:
     )
 
 
-def populate_platform(
-    client: httpx.Client, base_url: str, seed: dict, manufacturer_id: str
-) -> str:
+def populate_platform(client: httpx.Client, base_url: str, seed: dict, manufacturer_id: str) -> str:
     """Create the SR Linux platform."""
     plat = seed["platform"]
     return get_or_create(
-        client, base_url,
-        "DcimPlatform", "name", plat["name"],
+        client,
+        base_url,
+        "DcimPlatform",
+        "name",
+        plat["name"],
         {
             "name": {"value": plat["name"]},
             "description": {"value": plat["description"]},
@@ -211,8 +220,11 @@ def populate_device_types(
     dt_ids = {}
     for dt in seed["device_types"]:
         dt_id = get_or_create(
-            client, base_url,
-            "DcimDeviceType", "name", dt["name"],
+            client,
+            base_url,
+            "DcimDeviceType",
+            "name",
+            dt["name"],
             {
                 "name": {"value": dt["name"]},
                 "description": {"value": dt["description"]},
@@ -233,8 +245,11 @@ def populate_autonomous_systems(
     as_ids = {}
     for asys in seed["autonomous_systems"]:
         as_id = get_or_create(
-            client, base_url,
-            "RoutingAutonomousSystem", "asn", asys["asn"],
+            client,
+            base_url,
+            "RoutingAutonomousSystem",
+            "asn",
+            asys["asn"],
             {
                 "name": {"value": asys["name"]},
                 "asn": {"value": asys["asn"]},
@@ -250,8 +265,11 @@ def populate_autonomous_systems(
 def populate_namespace(client: httpx.Client, base_url: str) -> str:
     """Ensure the default IPAM namespace exists."""
     return get_or_create(
-        client, base_url,
-        "IpamNamespace", "name", "default",
+        client,
+        base_url,
+        "IpamNamespace",
+        "name",
+        "default",
         {
             "name": {"value": "default"},
             "description": {"value": "Default IP namespace"},
@@ -267,8 +285,11 @@ def populate_vrfs(
     vrf_ids = {}
     for vrf in seed.get("vrfs", []):
         vrf_id = get_or_create(
-            client, base_url,
-            "IpamVRF", "name", vrf["name"],
+            client,
+            base_url,
+            "IpamVRF",
+            "name",
+            vrf["name"],
             {
                 "name": {"value": vrf["name"]},
                 "description": {"value": vrf["description"]},
@@ -310,8 +331,11 @@ def populate_devices(
             create_data["asn"] = {"id": as_ids[dev["asn"]]}
 
         dev_id = get_or_create(
-            client, base_url,
-            "DcimDevice", "name", dev["name"],
+            client,
+            base_url,
+            "DcimDevice",
+            "name",
+            dev["name"],
             create_data,
             label=f"Device: {dev['name']}",
         )
@@ -331,8 +355,11 @@ def populate_ip_addresses(
 
         # IP address in Infrahub uses IpamIPAddress with address attribute
         ip_id = get_or_create(
-            client, base_url,
-            "IpamIPAddress", "address", ip,
+            client,
+            base_url,
+            "IpamIPAddress",
+            "address",
+            ip,
             {
                 "address": {"value": ip},
                 "description": {"value": iface.get("description", "")},
@@ -495,6 +522,7 @@ def populate_bgp_sessions(
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main():
     parser = argparse.ArgumentParser(description="Populate Infrahub with seed data")
     parser.add_argument(
@@ -522,7 +550,11 @@ def main():
     project_root = get_project_root()
 
     # Load seed data
-    seed_file = Path(args.seed_file) if args.seed_file else project_root / "infrahub" / "data" / "seed_data.yml"
+    seed_file = (
+        Path(args.seed_file)
+        if args.seed_file
+        else project_root / "infrahub" / "data" / "seed_data.yml"
+    )
     if not seed_file.exists():
         print(f"❌ Seed file not found: {seed_file}")
         sys.exit(1)
@@ -533,9 +565,11 @@ def main():
     print(f"🔧 Project root: {project_root}")
     print(f"🌐 Infrahub URL: {args.url}")
     print(f"📄 Seed file: {seed_file}")
-    print(f"📦 Seed data loaded: {len(seed.get('devices', []))} devices, "
-          f"{len(seed.get('interfaces', []))} interfaces, "
-          f"{len(seed.get('bgp_sessions', []))} BGP sessions")
+    print(
+        f"📦 Seed data loaded: {len(seed.get('devices', []))} devices, "
+        f"{len(seed.get('interfaces', []))} interfaces, "
+        f"{len(seed.get('bgp_sessions', []))} BGP sessions"
+    )
 
     if args.dry_run:
         print("\n🏁 Dry run complete. Seed data parsed successfully.")
@@ -588,8 +622,13 @@ def main():
 
         print("\n8️⃣  Creating devices...")
         device_ids = populate_devices(
-            client, args.url, seed,
-            location_id, platform_id, dt_ids, as_ids,
+            client,
+            args.url,
+            seed,
+            location_id,
+            platform_id,
+            dt_ids,
+            as_ids,
         )
 
         print("\n9️⃣  Creating IP addresses...")
@@ -597,13 +636,22 @@ def main():
 
         print("\n🔟  Creating interfaces...")
         iface_ids = populate_interfaces(
-            client, args.url, seed, device_ids, ip_ids,
+            client,
+            args.url,
+            seed,
+            device_ids,
+            ip_ids,
         )
 
         print("\n1️⃣1️⃣  Creating BGP sessions...")
         populate_bgp_sessions(
-            client, args.url, seed,
-            device_ids, as_ids, ip_ids, vrf_ids,
+            client,
+            args.url,
+            seed,
+            device_ids,
+            as_ids,
+            ip_ids,
+            vrf_ids,
         )
 
     print("\n" + "=" * 60)
