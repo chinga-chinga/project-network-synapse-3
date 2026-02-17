@@ -13,6 +13,7 @@ paths = [
     '''\.venv/''',
     '''library/''',
     '''uv\.lock''',
+    '''development/docker-compose.*\.yml''',
 ]
 
 # Allow test fixture IPs (not real infrastructure)

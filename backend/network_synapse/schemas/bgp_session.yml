@@ -5,9 +5,12 @@
 # Load order (handled by infrahub/schemas/load_schemas.py):
 #   1. library/schema-library/extensions/vrf/vrf.yml          -> IpamVRF, IpamRouteTarget
 #   2. library/schema-library/extensions/routing/routing.yml   -> RoutingProtocol (generic)
-#   3. library/schema-library/extensions/routing_bgp/bgp.yml   -> RoutingAutonomousSystem, RoutingBGPPeerGroup, RoutingBGPSession
-#   4. infrahub/schemas/network_device.yml                     -> DcimDevice extensions (management_ip, lab_node_name, asn)
-#   5. infrahub/schemas/network_interface.yml                  -> InterfacePhysical extensions (role)
+#   3. library/schema-library/extensions/routing_bgp/bgp.yml
+#      -> RoutingAutonomousSystem, RoutingBGPPeerGroup, RoutingBGPSession
+#   4. infrahub/schemas/network_device.yml
+#      -> DcimDevice extensions (management_ip, lab_node_name, asn)
+#   5. infrahub/schemas/network_interface.yml
+#      -> InterfacePhysical extensions (role)
 #
 # The routing_bgp extension provides:
 #   - RoutingAutonomousSystem: ASN with name, number, organization, location, devices
