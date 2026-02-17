@@ -5,63 +5,94 @@ on:
   push:
     branches: [develop]
 
+env:
+  PYTHON_VERSION: "3.11"
+  UV_VERSION: "latest"
+
 jobs:
+  # ---------------------------------------------------------------------------
+  # Detect which files changed
+  # ---------------------------------------------------------------------------
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      python: ${{ steps.filter.outputs.python }}
+      backend: ${{ steps.filter.outputs.backend }}
+      workers: ${{ steps.filter.outputs.workers }}
+      yaml: ${{ steps.filter.outputs.yaml }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: .github/file-filters.yml
+
+  # ---------------------------------------------------------------------------
+  # Code quality
+  # ---------------------------------------------------------------------------
   code-quality:
     name: Code Quality
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.python == 'true'
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt -r requirements-dev.txt
+        run: uv sync --all-groups
 
-      - name: Black format check
-        run: black --check --diff .
+      - name: Ruff lint check
+        run: uv run ruff check .
 
-      - name: isort import sorting check
-        run: isort --check-only --diff .
-
-      - name: Pylint
-        run: pylint **/*.py --rcfile=.pylintrc --output-format=colorized
-        continue-on-error: true
+      - name: Ruff format check
+        run: uv run ruff format --check .
 
       - name: MyPy type checking
-        run: mypy . --config-file=mypy.ini --show-error-codes
+        run: uv run mypy backend/ workers/
         continue-on-error: true
 
+  # ---------------------------------------------------------------------------
+  # Security scanning
+  # ---------------------------------------------------------------------------
   security-scanning:
     name: Security Scanning
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.python == 'true'
     permissions:
       security-events: write
     steps:
       - uses: actions/checkout@v4
 
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt -r requirements-dev.txt
+        run: uv sync --group dev
 
       - name: Bandit security scan (JSON report)
-        run: bandit -r scripts/ temporal_workers/ infrahub/ -f json -o bandit-report.json --exit-zero
+        run: uv run bandit -r backend/ workers/ -c pyproject.toml -f json -o bandit-report.json --exit-zero
         continue-on-error: true
 
       - name: Bandit security scan (SARIF report)
         run: |
-          bandit -r scripts/ temporal_workers/ infrahub/ -f sarif -o bandit-results.sarif --exit-zero || true
-          # Ensure SARIF file exists even if bandit fails entirely
+          uv run bandit -r backend/ workers/ -c pyproject.toml -f sarif -o bandit-results.sarif --exit-zero || true
           if [ ! -f bandit-results.sarif ]; then
             echo '{"version":"2.1.0","$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json","runs":[{"tool":{"driver":{"name":"Bandit","version":"0.0.0"}},"results":[]}]}' > bandit-results.sarif
           fi
@@ -72,6 +103,9 @@ jobs:
         with:
           sarif_file: bandit-results.sarif
 
+  # ---------------------------------------------------------------------------
+  # Secrets detection
+  # ---------------------------------------------------------------------------
   secrets-detection:
     name: Secrets Detection
     runs-on: ubuntu-latest
@@ -80,38 +114,46 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Gitleaks — scan for hardcoded secrets
+      - name: Gitleaks scan
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
 
+  # ---------------------------------------------------------------------------
+  # Unit tests
+  # ---------------------------------------------------------------------------
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.python == 'true'
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt -r requirements-dev.txt
+        run: uv sync --all-groups
 
       - name: Run unit tests
         run: |
-          pytest tests/unit/ -v \
-            --cov=scripts --cov=temporal_workers --cov=infrahub \
+          uv run pytest tests/unit/ -v \
+            --cov=backend/network_synapse --cov=workers/synapse_workers \
             --cov-report=xml \
             --cov-report=term-missing \
             --junitxml=test-results.xml
-            # TODO: Add --cov-fail-under=80 once real module code and tests exist
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -125,24 +167,29 @@ jobs:
           name: test-results
           path: test-results.xml
 
+  # ---------------------------------------------------------------------------
+  # Integration tests
+  # ---------------------------------------------------------------------------
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: [unit-tests]
-    # TODO: Add Infrahub and Containerlab integration tests in Week 3
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt -r requirements-dev.txt
+        run: uv sync --all-groups
 
       - name: Run integration tests
-        run: |
-          pytest tests/integration/ -v --timeout=300
+        run: uv run pytest tests/integration/ -v --timeout=300
