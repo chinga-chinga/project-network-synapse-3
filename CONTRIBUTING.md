@@ -1,0 +1,70 @@
+# Contributing to Network Synapse
+
+Thank you for your interest in contributing! This guide will help you get started.
+
+## Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/chinga-chinga/project-network-synapse-3.git
+cd project-network-synapse-3
+
+# Initialize submodules
+git submodule update --init --recursive
+
+# Install dependencies (requires uv: https://docs.astral.sh/uv/)
+uv sync --all-groups
+
+# Install pre-commit hooks
+uv run pre-commit install
+
+# Verify setup
+uv run invoke backend.test-unit
+```
+
+## Development Workflow
+
+1. **Create a branch** from `develop` (never commit directly to `main`)
+2. **Make changes** following our [coding standards](dev/guidelines/python.md)
+3. **Run quality checks**: `uv run invoke lint`
+4. **Run tests**: `uv run invoke backend.test-unit`
+5. **Add a changelog fragment** if the change is user-facing (see [changelog guide](dev/guidelines/changelog.md))
+6. **Open a PR** targeting `develop`
+
+## Branch Naming
+
+- `feature/<description>` — New features
+- `fix/<description>` — Bug fixes
+- `dev/<description>` — Infrastructure / tooling
+- `docs/<description>` — Documentation only
+
+## Commit Messages
+
+Use [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+feat: add BGP session validation
+fix: handle schema loader timeout (#42)
+docs: update infrastructure guide
+```
+
+## Key Commands
+
+| Command | Description |
+|---------|-------------|
+| `uv run invoke format` | Format all code |
+| `uv run invoke lint` | Lint all code |
+| `uv run invoke backend.test-unit` | Run unit tests |
+| `uv run invoke backend.test-all` | Run all tests |
+| `uv run invoke scan` | Security scan |
+
+## Project Documentation
+
+- **[AGENTS.md](AGENTS.md)** — Full project context and architecture
+- **[dev/guidelines/](dev/guidelines/)** — Coding standards
+- **[dev/knowledge/](dev/knowledge/)** — Architecture docs
+- **[dev/guides/](dev/guides/)** — How-to guides
+
+## Questions?
+
+Open an issue or check the existing documentation in the `dev/` directory.

@@ -1,0 +1,28 @@
+# CODEOWNERS — defines code ownership for PR reviews
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @chinga-chinga
+
+# Backend package
+/backend/ @chinga-chinga
+
+# Workers package
+/workers/ @chinga-chinga
+
+# Infrastructure
+/development/ @chinga-chinga
+/containerlab/ @chinga-chinga
+docker-compose*.yml @chinga-chinga
+
+# CI/CD
+/.github/ @chinga-chinga
+
+# Documentation
+/docs/ @chinga-chinga
+/dev/ @chinga-chinga
+
+# Root configs — changes here affect the whole project
+pyproject.toml @chinga-chinga
+uv.lock @chinga-chinga
+.pre-commit-config.yaml @chinga-chinga
