@@ -46,7 +46,7 @@ jobs:
         with:
           version: ${{ env.UV_VERSION }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -78,7 +78,7 @@ jobs:
         with:
           version: ${{ env.UV_VERSION }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -105,7 +105,7 @@ jobs:
         with:
           version: ${{ env.UV_VERSION }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -182,7 +182,7 @@ jobs:
         with:
           version: ${{ env.UV_VERSION }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
