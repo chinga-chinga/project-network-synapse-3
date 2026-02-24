@@ -70,6 +70,52 @@ services:
     ports:
       - "${TEMPORAL_UI_PORT:-8080}:8080"
 
+  # ---------------------------------------------------------------------------
+  # Telemetry & Observability stack
+  # ---------------------------------------------------------------------------
+  suzieq:
+    image: netenglabs/suzieq:latest
+    container_name: suzieq
+    ports:
+      - "8530:8530" # Suzieq REST API
+      - "8531:8531" # Suzieq GUI
+    volumes:
+      - ./suzieq/suzieq-inventory.yml:/suzieq/suzieq-inventory.yml:ro
+      - suzieq_parquet:/suzieq/parquet
+    command: "sq-poller -I /suzieq/suzieq-inventory.yml"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: synapse
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/network-operations.json
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+
 volumes:
   neo4j_data:
   temporal_data:
+  suzieq_parquet:
+  prometheus_data:
+  grafana_data:

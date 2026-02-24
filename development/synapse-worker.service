@@ -1,0 +1,28 @@
+[Unit]
+Description=Network Synapse Temporal Worker
+Documentation=https://github.com/chinga-chinga/project-network-synapse-3
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=anton
+Group=anton
+WorkingDirectory=/home/anton/project-network-synapse-3
+Environment="PATH=/home/anton/.local/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="TEMPORAL_ADDRESS=localhost:7233"
+Environment="INFRAHUB_URL=http://localhost:8000"
+ExecStart=/home/anton/.local/bin/uv run python -m synapse_workers.worker
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=synapse-worker
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/home/anton/project-network-synapse-3
+
+[Install]
+WantedBy=multi-user.target
