@@ -63,10 +63,10 @@ project-network-synapse-3/
 
 This is a **uv workspace monorepo** with two packages:
 
-| Package | Import Path | Description |
-|---------|-------------|-------------|
-| `network-synapse` | `network_synapse` | Backend: Infrahub interaction, config generation, schema management |
-| `network-synapse-workers` | `synapse_workers` | Temporal workers: durable workflows, activities |
+| Package                   | Import Path       | Description                                                         |
+| ------------------------- | ----------------- | ------------------------------------------------------------------- |
+| `network-synapse`         | `network_synapse` | Backend: Infrahub interaction, config generation, schema management |
+| `network-synapse-workers` | `synapse_workers` | Temporal workers: durable workflows, activities                     |
 
 Workers depend on the backend package. Both are linked via `[tool.uv.sources]` in the root `pyproject.toml`.
 
@@ -130,6 +130,43 @@ See `dev/guidelines/python.md` for full details.
 
 See `dev/guidelines/git-workflow.md` for full details.
 
+## Agent Rules (MANDATORY)
+
+> **All AI agents MUST follow these rules when working on this project.**
+
+### GitOps — No Direct Deployment
+
+1. **NEVER SSH or SCP directly to the GCP VM.** All changes must flow through Git.
+2. **ALWAYS create a feature branch** from `develop` (never commit directly to `main` or `develop`).
+3. **ALWAYS open a Pull Request** targeting `develop`. CI must pass before merge.
+4. **Deployment is automated.** Merging to `main` triggers the CD pipeline (`deploy.yml`) which SSHs to the VM, pulls code, and restarts the worker via systemd.
+5. **Infrastructure changes** (firewall rules, VM provisioning) must be documented in `docs/install.md` or an ADR, even if applied manually via `gcloud`.
+
+### Workflow for Code Changes
+
+```
+git checkout -b feat/<description> develop
+# ... make changes ...
+uv run invoke check-all               # MUST pass
+git add -A && git commit -m "feat: ..."  # Conventional Commits
+git push origin feat/<description>
+gh pr create --base develop            # Open PR
+# → CI validates → Review → Merge → CD auto-deploys
+```
+
+### Prohibited Actions
+
+- ❌ `gcloud compute scp` to push files to the VM
+- ❌ `gcloud compute ssh` to modify code or restart services on the VM
+- ❌ Direct `git push` to `main` or `develop`
+- ❌ Editing files on the VM that exist in the repo
+
+### Allowed Direct VM Access (Break-Glass Only)
+
+- ✅ Debugging a production issue (must document in an ADR afterwards)
+- ✅ One-time infrastructure setup (e.g., installing systemd service)
+- ✅ Checking logs: `gcloud compute ssh ... --command="journalctl -u synapse-worker"`
+
 ## Changelog
 
 Uses Towncrier for changelog management. When making changes, add a fragment file:
@@ -146,29 +183,32 @@ See `dev/guidelines/changelog.md` for details.
 
 This project follows the **Context Nuggets** pattern (ADR-0001) for developer documentation:
 
-| Directory | Purpose | Audience |
-|-----------|---------|----------|
-| `dev/adr/` | Architecture Decision Records | Human + AI |
-| `dev/commands/` | Reusable AI agent commands | AI agents |
-| `dev/guidelines/` | Coding standards and conventions | Human + AI |
-| `dev/guides/` | Step-by-step procedures | Human + AI |
-| `dev/knowledge/` | Architecture explanations | Human + AI |
-| `dev/prompts/` | Prompt templates for thinking tasks | Human |
-| `dev/skills/` | Domain-specific AI agent skills | AI agents |
+| Directory         | Purpose                             | Audience   |
+| ----------------- | ----------------------------------- | ---------- |
+| `dev/adr/`        | Architecture Decision Records       | Human + AI |
+| `dev/commands/`   | Reusable AI agent commands          | AI agents  |
+| `dev/guidelines/` | Coding standards and conventions    | Human + AI |
+| `dev/guides/`     | Step-by-step procedures             | Human + AI |
+| `dev/knowledge/`  | Architecture explanations           | Human + AI |
+| `dev/prompts/`    | Prompt templates for thinking tasks | Human      |
+| `dev/skills/`     | Domain-specific AI agent skills     | AI agents  |
 
 ## Infrastructure
 
-| Component | Local Port | Description |
-|-----------|-----------|-------------|
-| Infrahub | 8000 | Web UI + GraphQL API |
-| Temporal | 7233 | gRPC endpoint |
-| Temporal UI | 8080 | Web dashboard |
-| SR Linux (gNMI) | 57400 | Per-device gNMI |
-| Containerlab Graph | 50080 | Topology visualization |
+| Component          | Local Port | Description            |
+| ------------------ | ---------- | ---------------------- |
+| Infrahub           | 8000       | Web UI + GraphQL API   |
+| Temporal           | 7233       | gRPC endpoint          |
+| Temporal UI        | 8080       | Web dashboard          |
+| Grafana            | 3000       | Dashboards             |
+| Prometheus         | 9090       | Metrics + alerts       |
+| SR Linux (gNMI)    | 57400      | Per-device gNMI        |
+| Containerlab Graph | 50080      | Topology visualization |
 
 ## Lab Topology
 
 3-node Nokia SR Linux spine-leaf fabric:
+
 - `spine01` (IXR-D3, AS65000) — 4 fabric links
 - `leaf01` (IXR-D2, AS65001) — 2 uplinks to spine
 - `leaf02` (IXR-D2, AS65002) — 2 uplinks to spine
