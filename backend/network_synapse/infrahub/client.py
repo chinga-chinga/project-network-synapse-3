@@ -235,6 +235,10 @@ class InfrahubConfigClient:
         edges = result.get("DcimDevice", {}).get("edges", [])
         return [edge["node"]["name"]["value"] for edge in edges]
 
+    def list_devices(self) -> list[str]:
+        """Alias for get_all_device_hostnames — returns all device hostnames."""
+        return self.get_all_device_hostnames()
+
     def get_device(self, hostname: str) -> DeviceData:
         """Query a device by hostname. Returns parsed DeviceData."""
         # Infrahub filters with __value don't use GraphQL variables for the filter,

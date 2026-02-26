@@ -194,5 +194,11 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-groups
 
-      - name: Run integration tests
-        run: uv run pytest tests/integration/ -v --timeout=300
+      - name: Run integration tests (offline only)
+        run: |
+          # Only run integration tests that don't need live infra.
+          # Tests marked @pytest.mark.integration that require Infrahub/Containerlab
+          # are skipped here — they run against the real GCP VM via the deploy pipeline.
+          uv run pytest tests/integration/ -v --timeout=60 \
+            -k "hygiene" \
+            --tb=short
