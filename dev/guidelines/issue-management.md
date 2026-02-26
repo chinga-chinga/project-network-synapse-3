@@ -44,7 +44,7 @@ All issues should follow this structure:
 
 ## Issue Lifecycle
 
-```
+```text
 Created → Assigned → In Progress → In Review → Done
 ```
 
@@ -59,7 +59,7 @@ Created → Assigned → In Progress → In Review → Done
 
 In the PR body, always include:
 
-```
+```text
 Closes #<issue-number>
 ```
 
