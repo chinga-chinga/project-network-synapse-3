@@ -98,11 +98,13 @@ class TestEvaluateInterfaceState:
         result = _evaluate_interface_state("172.20.20.3", gnmi_ifaces, intended)
 
         assert result["passed"] is False
-        fail_detail = next(d for d in result["details"] if d["name"] == "ethernet-1/1")
+        fail_detail = next((d for d in result["details"] if d["name"] == "ethernet-1/1"), None)
+        assert fail_detail is not None, "ethernet-1/1 not found in details"
         assert fail_detail["status"] == "fail"
         assert "admin-up but oper-down" in fail_detail["reason"]
         # The healthy interface should still pass
-        pass_detail = next(d for d in result["details"] if d["name"] == "ethernet-1/2")
+        pass_detail = next((d for d in result["details"] if d["name"] == "ethernet-1/2"), None)
+        assert pass_detail is not None, "ethernet-1/2 not found in details"
         assert pass_detail["status"] == "pass"
 
     def test_missing_interface(self):
@@ -117,7 +119,8 @@ class TestEvaluateInterfaceState:
         result = _evaluate_interface_state("172.20.20.3", gnmi_ifaces, intended)
 
         assert result["passed"] is False
-        fail_detail = next(d for d in result["details"] if d["name"] == "ethernet-1/99")
+        fail_detail = next((d for d in result["details"] if d["name"] == "ethernet-1/99"), None)
+        assert fail_detail is not None, "ethernet-1/99 not found in details"
         assert fail_detail["status"] == "fail"
         assert "not found" in fail_detail["reason"]
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, TypedDict
 
 from pygnmi.client import gNMIclient
 
@@ -73,7 +73,15 @@ def check_bgp_summary(
 # Interface state validation
 # ---------------------------------------------------------------------------
 
-_FAIL_DETAIL = dict[str, str]
+
+class InterfaceDetail(TypedDict):
+    """Structured result for a single interface validation check."""
+
+    name: str
+    status: str  # "pass" or "fail"
+    reason: str
+    admin_state: str
+    oper_state: str
 
 
 def _make_detail(
@@ -82,7 +90,7 @@ def _make_detail(
     reason: str = "",
     admin_state: str = "",
     oper_state: str = "",
-) -> _FAIL_DETAIL:
+) -> InterfaceDetail:
     return {
         "name": name,
         "status": status,
@@ -125,10 +133,13 @@ def _evaluate_interface_state(
         if isinstance(iface, dict) and "name" in iface:
             device_ifaces[iface["name"]] = iface
 
-    details: list[_FAIL_DETAIL] = []
+    details: list[InterfaceDetail] = []
 
     for intended in intended_interfaces:
-        name = intended["name"]
+        name = intended.get("name")
+        if not name:
+            logger.warning(f"Skipping malformed interface entry (missing name): {intended}")
+            continue
         enabled = intended.get("enabled", True)
         actual = device_ifaces.get(name)
 
