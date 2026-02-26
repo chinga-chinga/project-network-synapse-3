@@ -56,11 +56,25 @@ test: add unit tests for config generator
 
 1. Create branch from `develop`
 2. Make changes, commit with conventional commit messages
-3. Push branch and open PR targeting `develop`
-4. Fill out PR template (Why, What changed, How to test)
-5. CI must pass (lint, tests, security scan)
-6. Request review
-7. Merge via squash merge (keeps history clean)
+3. Run `uv run invoke check-all` — must pass before opening PR
+4. Rebase on `origin/develop` to resolve conflicts
+5. Push branch and open PR targeting `develop`
+6. Fill out PR template (Why, What changed, How to review, How to test)
+7. CI must pass (lint, tests, security scan)
+8. **CodeRabbit will automatically post an AI review** — address actionable comments before requesting human review
+9. Request review — at least 1 approval required
+10. Address all review comments
+11. Merge via **squash merge** (keeps history clean)
+12. Delete the feature branch after merge
+
+### Key Rules
+
+- **Keep PRs small** — aim for < 400 lines changed
+- **One feature/fix per PR** — don't combine unrelated changes
+- **PR title uses Conventional Commits** — this becomes the merge commit message
+- **Don't force-push during review** — it destroys comment context
+
+> For comprehensive guidance, see [Pull Request Best Practices](../guides/pull-request-best-practices.md).
 
 ## Submodule Handling
 
@@ -96,6 +110,21 @@ Deployment is **fully automated** via GitHub Actions.
 | `VM_SSH_KEY` | SSH private key for the deployment VM |
 | `VM_HOST`    | IP address of the GCP VM              |
 
+## Issue Lifecycle
+
+Every issue follows this progression:
+
+| Stage           | Action                                                                          |
+| --------------- | ------------------------------------------------------------------------------- |
+| **Created**     | Assignee set, label set, `## Sub-tasks` and `## Acceptance Criteria` filled out |
+| **In Progress** | Branch created matching the `## Branch` field in the issue body                 |
+| **In Review**   | PR opened with `Closes #N` in the body — links the PR to the issue              |
+| **Done**        | PR merged → issue auto-closed by GitHub                                         |
+
+As each sub-task is completed, **edit the issue body and tick the checkbox** so progress is visible without reading the commit history.
+
+> For full details, see [Issue Management](./issue-management.md).
+
 ## Agent-Specific Rules
 
 > **AI agents MUST always use this workflow. No exceptions.**
@@ -104,6 +133,7 @@ Deployment is **fully automated** via GitHub Actions.
 2. Make changes and run `uv run invoke check-all`
 3. Commit with Conventional Commits format
 4. Push and open a PR: `gh pr create --base develop`
-5. Wait for CI to pass and PR to be merged
-6. **Do NOT SSH to the VM to deploy changes.** The CD pipeline handles deployment.
-7. **Do NOT push directly to `main` or `develop`.** Branch protection will reject it.
+5. **Wait for CodeRabbit AI review** — address any flagged issues before requesting human review
+6. Wait for CI to pass and PR to be merged
+7. **Do NOT SSH to the VM to deploy changes.** The CD pipeline handles deployment.
+8. **Do NOT push directly to `main` or `develop`.** Branch protection will reject it.

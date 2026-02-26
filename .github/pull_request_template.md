@@ -37,3 +37,4 @@ uv run invoke backend.test-unit
 - [ ] Linting passes (`uv run invoke lint`)
 - [ ] Changelog fragment added (if user-facing change)
 - [ ] Documentation updated (if applicable)
+- [ ] CodeRabbit AI review comments addressed (or replied to with reasoning)

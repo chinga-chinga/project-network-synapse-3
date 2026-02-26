@@ -183,15 +183,15 @@ See `dev/guidelines/changelog.md` for details.
 
 This project follows the **Context Nuggets** pattern (ADR-0001) for developer documentation:
 
-| Directory         | Purpose                             | Audience   |
-| ----------------- | ----------------------------------- | ---------- |
-| `dev/adr/`        | Architecture Decision Records       | Human + AI |
-| `dev/commands/`   | Reusable AI agent commands          | AI agents  |
-| `dev/guidelines/` | Coding standards and conventions    | Human + AI |
-| `dev/guides/`     | Step-by-step procedures             | Human + AI |
-| `dev/knowledge/`  | Architecture explanations           | Human + AI |
-| `dev/prompts/`    | Prompt templates for thinking tasks | Human      |
-| `dev/skills/`     | Domain-specific AI agent skills     | AI agents  |
+| Directory         | Purpose                                                                                                               | Audience   |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------- | ---------- |
+| `dev/adr/`        | Architecture Decision Records                                                                                         | Human + AI |
+| `dev/commands/`   | Reusable AI agent commands                                                                                            | AI agents  |
+| `dev/guidelines/` | Coding standards and conventions                                                                                      | Human + AI |
+| `dev/guides/`     | Step-by-step procedures and best practices (including [PR best practices](dev/guides/pull-request-best-practices.md)) | Human + AI |
+| `dev/knowledge/`  | Architecture explanations                                                                                             | Human + AI |
+| `dev/prompts/`    | Prompt templates for thinking tasks                                                                                   | Human      |
+| `dev/skills/`     | Domain-specific AI agent skills                                                                                       | AI agents  |
 
 ## Infrastructure
 

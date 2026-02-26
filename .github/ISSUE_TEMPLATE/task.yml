@@ -2,7 +2,17 @@ name: Task
 description: A development task or chore
 title: "[Task]: "
 labels: ["task"]
+assignees: ["chinga-chinga"]
 body:
+  - type: input
+    id: branch_name
+    attributes:
+      label: Branch Name
+      description: What branch will this be worked on?
+      placeholder: "dev/description-of-task"
+    validations:
+      required: false
+
   - type: textarea
     id: description
     attributes:
