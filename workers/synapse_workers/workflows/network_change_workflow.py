@@ -13,7 +13,7 @@ with workflow.unsafe.imports_passed_through():
     from synapse_workers.activities.config_deployment_activities import deploy_config, rollback_config
     from synapse_workers.activities.device_backup_activities import backup_running_config, store_backup
     from synapse_workers.activities.infrahub_activities import fetch_device_config, update_device_status
-    from synapse_workers.activities.validation_activities import validate_bgp
+    from synapse_workers.activities.validation_activities import validate_bgp, validate_interfaces
 
 # Standard retry policy for device communication
 device_retry_policy = RetryPolicy(
@@ -119,6 +119,14 @@ class NetworkChangeWorkflow:
             await workflow.execute_activity(
                 validate_bgp,
                 args=[device_hostname, ip_address],
+                start_to_close_timeout=timedelta(seconds=30),
+                retry_policy=device_retry_policy,
+            )
+
+            intended_ifaces = device_data["interfaces"]["interfaces"]
+            await workflow.execute_activity(
+                validate_interfaces,
+                args=[device_hostname, ip_address, intended_ifaces],
                 start_to_close_timeout=timedelta(seconds=30),
                 retry_policy=device_retry_policy,
             )
