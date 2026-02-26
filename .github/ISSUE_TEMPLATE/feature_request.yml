@@ -2,7 +2,17 @@ name: Feature Request
 description: Suggest a new feature or enhancement
 title: "[Feature]: "
 labels: ["enhancement"]
+assignees: ["chinga-chinga"]
 body:
+  - type: input
+    id: branch_name
+    attributes:
+      label: Branch Name
+      description: What branch will this be worked on?
+      placeholder: "feature/description-of-feature"
+    validations:
+      required: false
+
   - type: textarea
     id: use_case
     attributes:
