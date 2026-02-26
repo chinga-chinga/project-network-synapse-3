@@ -4,7 +4,7 @@
 
 ## PR Lifecycle
 
-```
+```text
 feature branch → open PR → CI validates → CodeRabbit AI review → peer review → merge to develop → CD deploys
 ```
 
@@ -62,7 +62,7 @@ Every PR uses the [PR template](../../.github/pull_request_template.md). Fill ou
 
 Use Conventional Commits format in the PR title:
 
-```
+```text
 feat: add BGP session validation activity
 fix: handle timeouts in schema loader (#42)
 docs: update infrastructure connection guide

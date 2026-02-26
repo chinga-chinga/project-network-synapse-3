@@ -44,7 +44,7 @@ We adopt the Context Nuggets pattern, organizing developer documentation under `
 - Human developers have organized, discoverable documentation
 - Single source of truth — no duplication between human and AI docs
 - Easy to maintain — small files are simpler to update
-- Follows proven patterns from production-grade open source projects
+- Follows proven patterns from production-grade open-source projects
 
 ### Negative
 
