@@ -100,6 +100,27 @@ def _make_detail(
     }
 
 
+def _build_device_iface_lookup(gnmi_interfaces: Any) -> dict[str, dict] | None:
+    """Build a name-keyed lookup dict from gNMI interface data.
+
+    Handles list-of-dicts (common) and dict-keyed-by-name (defensive).
+    Returns None if the format is unrecognised.
+    """
+    device_ifaces: dict[str, dict] = {}
+    if isinstance(gnmi_interfaces, list):
+        for iface in gnmi_interfaces:
+            if isinstance(iface, dict) and "name" in iface:
+                device_ifaces[iface["name"]] = iface
+    elif isinstance(gnmi_interfaces, dict):
+        for iface_name, iface in gnmi_interfaces.items():
+            if isinstance(iface, dict):
+                normalized_name = iface.get("name", iface_name)
+                device_ifaces[normalized_name] = {"name": normalized_name, **iface}
+    else:
+        return None
+    return device_ifaces
+
+
 def _evaluate_interface_state(
     ip_address: str,
     gnmi_interfaces: Any,
@@ -115,12 +136,8 @@ def _evaluate_interface_state(
     Returns:
         dict with keys: passed (bool), device (str), details (list[dict]).
     """
-    # Build lookup from gNMI response keyed by interface name
-    if isinstance(gnmi_interfaces, list):
-        iface_list = gnmi_interfaces
-    elif isinstance(gnmi_interfaces, dict):
-        iface_list = list(gnmi_interfaces.values())
-    else:
+    device_ifaces = _build_device_iface_lookup(gnmi_interfaces)
+    if device_ifaces is None:
         logger.error(f"Unexpected interface data format from {ip_address}: {type(gnmi_interfaces)}")
         return {
             "passed": False,
@@ -128,17 +145,17 @@ def _evaluate_interface_state(
             "details": [_make_detail("N/A", "fail", f"Unexpected data format: {type(gnmi_interfaces)}")],
         }
 
-    device_ifaces: dict[str, dict] = {}
-    for iface in iface_list:
-        if isinstance(iface, dict) and "name" in iface:
-            device_ifaces[iface["name"]] = iface
-
     details: list[InterfaceDetail] = []
 
     for intended in intended_interfaces:
+        if not isinstance(intended, dict):
+            logger.error(f"Malformed intended interface entry on {ip_address}: {intended!r}")
+            details.append(_make_detail("N/A", "fail", "malformed intended interface entry"))
+            continue
         name = intended.get("name")
         if not name:
-            logger.warning(f"Skipping malformed interface entry (missing name): {intended}")
+            logger.error(f"Malformed intended interface entry on {ip_address}: missing name ({intended!r})")
+            details.append(_make_detail("N/A", "fail", "missing interface name in intended state"))
             continue
         enabled = intended.get("enabled", True)
         actual = device_ifaces.get(name)

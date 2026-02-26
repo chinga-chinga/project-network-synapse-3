@@ -169,6 +169,27 @@ class TestEvaluateInterfaceState:
 
         assert result["passed"] is True
 
+    def test_dict_format_without_name_key(self):
+        """gNMI dict response where values omit the 'name' field — uses dict key."""
+        gnmi_ifaces = {
+            "ethernet-1/1": {"admin-state": "enable", "oper-state": "up"},
+        }
+        intended = [_make_intended("ethernet-1/1")]
+
+        result = _evaluate_interface_state("172.20.20.3", gnmi_ifaces, intended)
+
+        assert result["passed"] is True
+
+    def test_malformed_intended_entry_fails(self):
+        """Malformed intended entries (missing name) should fail, not be skipped."""
+        gnmi_ifaces = [_make_gnmi_interface("ethernet-1/1")]
+        intended = [{"enabled": True}]  # missing "name" key
+
+        result = _evaluate_interface_state("172.20.20.3", gnmi_ifaces, intended)
+
+        assert result["passed"] is False
+        assert "missing interface name" in result["details"][0]["reason"]
+
 
 # ---------------------------------------------------------------------------
 # check_interface_state — mocked gNMI client
