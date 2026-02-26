@@ -29,7 +29,8 @@ uv run invoke backend.test-unit
 3. **Run quality checks**: `uv run invoke lint`
 4. **Run tests**: `uv run invoke backend.test-unit`
 5. **Add a changelog fragment** if the change is user-facing (see [changelog guide](dev/guidelines/changelog.md))
-6. **Open a PR** targeting `develop`
+6. **Open a PR** targeting `develop` (see [PR best practices](dev/guides/pull-request-best-practices.md))
+7. **CodeRabbit** will automatically post an AI review — address any flagged issues before requesting human review
 
 ## Branch Naming
 
@@ -50,20 +51,21 @@ docs: update infrastructure guide
 
 ## Key Commands
 
-| Command | Description |
-|---------|-------------|
-| `uv run invoke format` | Format all code |
-| `uv run invoke lint` | Lint all code |
-| `uv run invoke backend.test-unit` | Run unit tests |
-| `uv run invoke backend.test-all` | Run all tests |
-| `uv run invoke scan` | Security scan |
+| Command                           | Description     |
+| --------------------------------- | --------------- |
+| `uv run invoke format`            | Format all code |
+| `uv run invoke lint`              | Lint all code   |
+| `uv run invoke backend.test-unit` | Run unit tests  |
+| `uv run invoke backend.test-all`  | Run all tests   |
+| `uv run invoke scan`              | Security scan   |
 
 ## Project Documentation
 
 - **[AGENTS.md](AGENTS.md)** — Full project context and architecture
 - **[dev/guidelines/](dev/guidelines/)** — Coding standards
 - **[dev/knowledge/](dev/knowledge/)** — Architecture docs
-- **[dev/guides/](dev/guides/)** — How-to guides
+- **[dev/guides/](dev/guides/)** — How-to guides (including [PR best practices](dev/guides/pull-request-best-practices.md))
+- **[.coderabbit.yaml](.coderabbit.yaml)** — AI code review configuration (CodeRabbit)
 
 ## Questions?
 
