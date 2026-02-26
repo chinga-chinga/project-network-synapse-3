@@ -35,10 +35,16 @@ def test_all(ctx):
 
 
 @task
-def generate_configs(ctx, device="all"):
+def generate_configs(ctx, device="all", url="", output_dir="", dry_run=False):
     """Generate SR Linux configurations from Infrahub data."""
-    print(f"Generating configs for: {device}")
-    execute_command(ctx, f"python -m network_synapse.scripts.generate_configs --device {device}", warn=True)
+    cmd = f"python -m network_synapse.scripts.generate_configs --device {device}"
+    if url:
+        cmd += f" --url {url}"
+    if output_dir:
+        cmd += f" --output-dir {output_dir}"
+    if dry_run:
+        cmd += " --dry-run"
+    execute_command(ctx, cmd, warn=True)
 
 
 @task

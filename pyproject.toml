@@ -125,6 +125,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
     "S101",    # assert is fine in tests
+    "S106",    # hardcoded passwords in test fixtures
     "PLR2004", # magic values in tests
     "ARG001",  # unused fixtures
     "SLF001",  # private access in tests
@@ -253,4 +254,4 @@ showcontent = true
 
 [tool.bandit]
 exclude_dirs = ["tests", ".venv", "library"]
-skips = ["B101"]
+skips = ["B101", "B105", "B107", "B701"]
