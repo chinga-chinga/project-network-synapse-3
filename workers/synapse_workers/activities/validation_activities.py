@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from temporalio import activity
 
-from network_synapse.scripts.validate_state import check_bgp_summary
+from network_synapse.scripts.validate_state import check_bgp_summary, check_interface_state
 
 
 @activity.defn
@@ -18,12 +18,32 @@ async def validate_bgp(device_hostname: str, ip_address: str) -> bool:
 
 
 @activity.defn
-async def validate_interfaces(device_hostname: str, ip_address: str) -> bool:
-    """Validate interface states match intended config.
+async def validate_interfaces(
+    device_hostname: str,
+    ip_address: str,
+    intended_interfaces: list[dict],
+) -> dict:
+    """Validate interface states match intended config from Infrahub.
 
-    TODO: gNMI GET /interface[name=*] for oper-state, admin-state, IP
-    TODO: Compare against Infrahub intended state
-    TODO: Flag interfaces that are admin-up but oper-down
+    Args:
+        device_hostname: Device hostname (for logging/error messages).
+        ip_address: Device management IP for gNMI connection.
+        intended_interfaces: List of intended interface dicts from InterfacesTemplateVars.
+
+    Returns:
+        Structured result dict with keys: passed, device, details.
+
+    Raises:
+        RuntimeError: If validation fails (triggers workflow rollback).
     """
-    activity.logger.info(f"Interface validation for {device_hostname} — not yet implemented")
-    return True
+    activity.logger.info(f"Validating interface state on {device_hostname} ({ip_address})")
+    result = check_interface_state(ip_address, intended_interfaces)
+    if not result["passed"]:
+        for detail in result.get("details", []):
+            if detail["status"] == "fail":
+                activity.logger.error(
+                    f"  FAIL: {detail['name']} — {detail['reason']} "
+                    f"(admin={detail['admin_state']}, oper={detail['oper_state']})"
+                )
+        raise RuntimeError(f"Interface validation failed on {device_hostname}")
+    return result

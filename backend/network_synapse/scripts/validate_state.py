@@ -67,3 +67,131 @@ def check_bgp_summary(
     except Exception as e:
         logger.error(f"Failed to query {ip_address}: {e!s}")
         return False
+
+
+# ---------------------------------------------------------------------------
+# Interface state validation
+# ---------------------------------------------------------------------------
+
+_FAIL_DETAIL = dict[str, str]
+
+
+def _make_detail(
+    name: str,
+    status: str,
+    reason: str = "",
+    admin_state: str = "",
+    oper_state: str = "",
+) -> _FAIL_DETAIL:
+    return {
+        "name": name,
+        "status": status,
+        "reason": reason,
+        "admin_state": admin_state,
+        "oper_state": oper_state,
+    }
+
+
+def _evaluate_interface_state(
+    ip_address: str,
+    gnmi_interfaces: Any,
+    intended_interfaces: list[dict],
+) -> dict:
+    """Compare gNMI interface state against intended config from Infrahub.
+
+    Args:
+        ip_address: Device management IP (for logging).
+        gnmi_interfaces: Parsed gNMI GET response value for /interface[name=*].
+        intended_interfaces: List of intended interface dicts from InterfacesTemplateVars.
+
+    Returns:
+        dict with keys: passed (bool), device (str), details (list[dict]).
+    """
+    # Build lookup from gNMI response keyed by interface name
+    if isinstance(gnmi_interfaces, list):
+        iface_list = gnmi_interfaces
+    elif isinstance(gnmi_interfaces, dict):
+        iface_list = list(gnmi_interfaces.values())
+    else:
+        logger.error(f"Unexpected interface data format from {ip_address}: {type(gnmi_interfaces)}")
+        return {
+            "passed": False,
+            "device": ip_address,
+            "details": [_make_detail("N/A", "fail", f"Unexpected data format: {type(gnmi_interfaces)}")],
+        }
+
+    device_ifaces: dict[str, dict] = {}
+    for iface in iface_list:
+        if isinstance(iface, dict) and "name" in iface:
+            device_ifaces[iface["name"]] = iface
+
+    details: list[_FAIL_DETAIL] = []
+
+    for intended in intended_interfaces:
+        name = intended["name"]
+        enabled = intended.get("enabled", True)
+        actual = device_ifaces.get(name)
+
+        if actual is None:
+            logger.error(f"Interface {name} not found on {ip_address}")
+            details.append(_make_detail(name, "fail", "interface not found on device"))
+            continue
+
+        admin = actual.get("admin-state", "unknown")
+        oper = actual.get("oper-state", "unknown")
+
+        if enabled and admin != "enable":
+            logger.error(f"{name} on {ip_address}: admin-state is {admin}, expected enable")
+            details.append(_make_detail(name, "fail", f"admin-state is {admin}, expected enable", admin, oper))
+        elif enabled and oper != "up":
+            logger.error(f"{name} on {ip_address}: admin-up but oper-down")
+            details.append(_make_detail(name, "fail", "admin-up but oper-down", admin, oper))
+        elif not enabled and admin == "enable":
+            logger.error(f"{name} on {ip_address}: admin-state is enable, expected disable")
+            details.append(_make_detail(name, "fail", "admin-state is enable, expected disable", admin, oper))
+        else:
+            logger.info(f"{name} on {ip_address}: OK (admin={admin}, oper={oper})")
+            details.append(_make_detail(name, "pass", "", admin, oper))
+
+    passed = all(d["status"] == "pass" for d in details)
+    return {"passed": passed, "device": ip_address, "details": details}
+
+
+def check_interface_state(
+    ip_address: str,
+    intended_interfaces: list[dict],
+    username: str = "admin",
+    password: str = "NokiaSrl1!",  # noqa: S107
+    port: int = 57400,
+) -> dict:
+    """Check if device interface states match intended config.
+
+    Args:
+        ip_address: Device management IP.
+        intended_interfaces: List of intended interface dicts (from InterfacesTemplateVars).
+
+    Returns:
+        dict with keys: passed (bool), device (str), details (list[dict]).
+    """
+    logger.info(f"Checking interface state on {ip_address}")
+    try:
+        with gNMIclient(target=(ip_address, port), username=username, password=password, insecure=True) as gc:
+            result = gc.get(path=["/interface[name=*]"], datatype="state")
+
+            gnmi_interfaces = _extract_gnmi_val(result)
+            if gnmi_interfaces is not None:
+                return _evaluate_interface_state(ip_address, gnmi_interfaces, intended_interfaces)
+
+            logger.error(f"No interface state data found on {ip_address}")
+            return {
+                "passed": False,
+                "device": ip_address,
+                "details": [_make_detail("N/A", "fail", "No interface state data in gNMI response")],
+            }
+    except Exception as e:
+        logger.error(f"Failed to query {ip_address}: {e!s}")
+        return {
+            "passed": False,
+            "device": ip_address,
+            "details": [_make_detail("N/A", "fail", f"gNMI connection error: {e!s}")],
+        }
