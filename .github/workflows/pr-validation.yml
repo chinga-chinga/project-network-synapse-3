@@ -18,8 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     if: >-
-      github.event.pull_request.base.ref != 'main'
-      && !startsWith(github.head_ref, 'dependabot/')
+      !startsWith(github.head_ref, 'dependabot/') &&
+      !(github.event.pull_request.base.ref == 'main' && (github.head_ref == 'develop' || startsWith(github.head_ref, 'release/')))
     steps:
       - name: Check PR body for issue reference
         env:
