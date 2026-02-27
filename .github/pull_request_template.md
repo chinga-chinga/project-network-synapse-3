@@ -2,7 +2,7 @@
 
 <!-- What problem does this solve? Link to issue if applicable. -->
 
-Closes #
+Closes #<issue-number> <!-- REQUIRED: CI will fail without a linked issue -->
 
 ## What Changed
 

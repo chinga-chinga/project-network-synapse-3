@@ -152,6 +152,7 @@ uv run invoke check-all               # MUST pass
 git add -A && git commit -m "feat: ..."  # Conventional Commits
 git push -u origin feat/<description>
 gh pr create --base develop            # Open PR — ALWAYS use --base develop
+# PR body MUST include "Closes #<issue-number>" — CI will reject PRs without it
 # → CI validates → Review → Merge → CD auto-deploys
 ```
 
