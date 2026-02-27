@@ -1,0 +1,33 @@
+name: PR Lint
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  issue-link-check:
+    name: Enforce Issue Linking
+    runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]' && github.base_ref != 'main'
+    steps:
+      - name: Check for Issue Closure Keyword
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || "";
+            // Regex to look for "Closes #<num>", "Fixes #<num>", "Resolves #<num>"
+            const issueRegex = /(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#\d+/i;
+            
+            if (!issueRegex.test(prBody)) {
+              core.setFailed("PR description does not contain a keyword linking it to an issue (e.g., 'Closes #123'). This is required for GitHub auto-closure.");
+              
+              // Post a comment explaining why the check failed
+              github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: "🚨 **CI Failure: Missing Issue Link**\n\nYour PR description does not contain a supported keyword to automatically close an issue. Please edit the PR description and include exactly:\n\n`Closes #<issue_number>`\n\nThis ensures the issue is tracked correctly and will auto-close when merged."
+              });
+            } else {
+              core.info("Issue link found in PR description.");
+            }

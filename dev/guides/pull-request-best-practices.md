@@ -58,6 +58,11 @@ Every PR uses the [PR template](../../.github/pull_request_template.md). Fill ou
 | **Impact**        | Check backward compat, new deps, config changes, migrations |
 | **Checklist**     | Tests, lint, changelog fragment, docs — tick all that apply |
 
+> [!CAUTION]
+> **Strict Issue Linking Required:**
+> Our CI pipeline includes a PR Lint step that enforces the presence of an issue-closing keyword. You MUST include exactly `Closes #<issue_number>` (or Fixes/Resolves) in your PR description.
+> Referring to an issue as `(Issue #51)` or `#51` will fail CI and prevent merging to ensure issues are auto-closed correctly.
+
 ### 6. Use a Descriptive Title
 
 Use Conventional Commits format in the PR title:

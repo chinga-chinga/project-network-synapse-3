@@ -1,0 +1,35 @@
+name: Bug Triage
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  triage-bug-report:
+    name: Triage Newly Submitted Bugs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply labels based on issue template
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Check if the issue has the "bug" label (from bug_report.yml template)
+            const labels = context.payload.issue.labels.map(l => l.name);
+            
+            if (labels.includes('bug')) {
+              // Add a "triage" label so maintainers know it's unreviewed
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ['triage']
+              });
+              
+              // Optionally add a welcome/triage comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: "👋 Thanks for reporting this bug!\n\nIt has been automatically marked for `triage`. A maintainer will review it shortly. In the meantime, please ensure your description includes **Steps to Reproduce** and **Environment Details**."
+              });
+            }

@@ -55,6 +55,16 @@ Created → Assigned → In Progress → In Review → Done
 | **In Review**   | PR opened with `Closes #N` in the body — links PR to issue on GitHub                 |
 | **Done**        | PR merged → issue **auto-closed** by GitHub via `Closes #N`                          |
 
+## Bug Management Lifecycle
+
+Bugs require strict tracking to ensure they are diagnosed, assigned, and fixed properly.
+
+1. **Submission**: All bugs must be submitted using the `Bug Report` issue template (`.github/ISSUE_TEMPLATE/bug_report.yml`).
+2. **Triage**: A GitHub action will automatically tag new bug reports with the `triage` label.
+3. **Investigation**: A maintainer will investigate the issue. If valid, the `triage` label will be swapped for the `bug` label, an assignee will be set, and Sub-tasks will be defined.
+4. **Resolution**: The assigned developer opens a PR using the `fix/...` branch naming convention.
+5. **Closure**: The PR description MUST use the exact keyword `Closes #<bug_issue_number>`. Our PR linting automation will enforce this keyword to ensure the bug is not left open after merge.
+
 ## Linking a PR to an Issue
 
 In the PR body, always include:
