@@ -19,7 +19,8 @@ jobs:
     permissions: {}
     if: >-
       !startsWith(github.head_ref, 'dependabot/') &&
-      !(github.event.pull_request.base.ref == 'main' && (github.head_ref == 'develop' || startsWith(github.head_ref, 'release/')))
+      !(github.event.pull_request.base.ref == 'main' &&
+      (github.head_ref == 'develop' || startsWith(github.head_ref, 'release/')))
     steps:
       - name: Check PR body for issue reference
         env:
