@@ -46,6 +46,29 @@ async def fetch_device_config(device_hostname: str) -> dict:
 async def update_device_status(device_hostname: str, status: str) -> None:
     """Update device status in Infrahub.
 
-    TODO: Mutate device status field via Infrahub GraphQL
-    TODO: Add audit log entry for status change
+    Sends a DcimDeviceUpdate GraphQL mutation to change the device status field.
+    Emits a structured audit log entry recording the old and new status.
+
+    Args:
+        device_hostname: Device hostname to update.
+        status: Target status (active, provisioning, maintenance, drained).
+
+    Raises:
+        ValueError: If status is invalid (non-retryable).
+        DeviceNotFoundError: If device not found (non-retryable).
+        RuntimeError: On Infrahub API errors (retryable by Temporal).
     """
+    client = InfrahubConfigClient(
+        url=os.getenv("INFRAHUB_URL", "http://localhost:8000"),
+        token=os.getenv("INFRAHUB_TOKEN", ""),
+    )
+    try:
+        device = client.update_device_status(device_hostname, status)
+        activity.logger.info(
+            "Device status updated: device=%s old_status=%s new_status=%s",
+            device_hostname,
+            device.status,
+            status,
+        )
+    finally:
+        client.close()

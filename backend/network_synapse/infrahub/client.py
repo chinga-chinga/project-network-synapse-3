@@ -81,6 +81,20 @@ query GetDeviceInterfaces($device_ids: [ID!]) {
 }
 """
 
+MUTATION_UPDATE_DEVICE_STATUS = """
+mutation UpdateDeviceStatus($data: DcimDeviceUpdateInput!) {
+    DcimDeviceUpdate(data: $data) {
+        ok
+        object {
+            id
+            display_label
+        }
+    }
+}
+"""
+
+VALID_DEVICE_STATUSES: frozenset[str] = frozenset({"active", "provisioning", "maintenance", "drained"})
+
 QUERY_DEVICE_BGP_SESSIONS = """
 query GetDeviceBGPSessions($device_ids: [ID!]) {
     RoutingBGPSession(device__ids: $device_ids) {
@@ -352,3 +366,38 @@ class InfrahubConfigClient:
             interfaces=interfaces,
             bgp_sessions=bgp_sessions,
         )
+
+    def update_device_status(self, hostname: str, new_status: str) -> DeviceData:
+        """Update device status in Infrahub via GraphQL mutation.
+
+        Resolves device ID via hostname, then issues a DcimDeviceUpdate mutation.
+
+        Args:
+            hostname: Device hostname to look up.
+            new_status: Target status. Must be one of: active, provisioning,
+                maintenance, drained.
+
+        Returns:
+            DeviceData of the device *before* the update (for audit logging).
+
+        Raises:
+            ValueError: If new_status is not a valid device status.
+            DeviceNotFoundError: If hostname does not exist in Infrahub.
+            RuntimeError: If the GraphQL mutation fails.
+        """
+        if new_status not in VALID_DEVICE_STATUSES:
+            msg = f"Invalid device status '{new_status}'. Must be one of: {', '.join(sorted(VALID_DEVICE_STATUSES))}"
+            raise ValueError(msg)
+
+        device = self.get_device(hostname)
+
+        result = self._graphql(
+            MUTATION_UPDATE_DEVICE_STATUS,
+            variables={"data": {"id": device.id, "status": {"value": new_status}}},
+        )
+
+        update_result = result.get("DcimDeviceUpdate", {})
+        if not update_result.get("ok"):
+            raise RuntimeError(f"Failed to update status for device '{hostname}': {result}")
+
+        return device
