@@ -145,14 +145,18 @@ See `dev/guidelines/git-workflow.md` for full details.
 ### Workflow for Code Changes
 
 ```
+git checkout develop && git pull origin develop   # ALWAYS start from latest develop
 git checkout -b feat/<description> develop
 # ... make changes ...
 uv run invoke check-all               # MUST pass
 git add -A && git commit -m "feat: ..."  # Conventional Commits
-git push origin feat/<description>
-gh pr create --base develop            # Open PR
+git push -u origin feat/<description>
+gh pr create --base develop            # Open PR — ALWAYS use --base develop
 # → CI validates → Review → Merge → CD auto-deploys
 ```
+
+> **Git hooks enforce these rules locally.** Pre-commit blocks commits to `main`/`develop`.
+> Pre-push blocks pushes to `main`/`develop`. See `.githooks/` and `.pre-commit-config.yaml`.
 
 ### Prohibited Actions
 

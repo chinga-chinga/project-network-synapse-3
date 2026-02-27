@@ -79,7 +79,7 @@ class NetworkChangeWorkflow:
             # Mark deployment as failed in Infrahub, no rollback needed since we didn't push
             await workflow.execute_activity(
                 update_device_status,
-                args=[device_hostname, "failed"],
+                args=[device_hostname, "maintenance"],
                 start_to_close_timeout=timedelta(seconds=10),
             )
             raise RuntimeError("Deployment aborted due to Hygiene Checker failures.")
@@ -107,7 +107,7 @@ class NetworkChangeWorkflow:
             # Mark deployment as failed in Infrahub
             await workflow.execute_activity(
                 update_device_status,
-                args=[device_hostname, "failed"],
+                args=[device_hostname, "maintenance"],
                 start_to_close_timeout=timedelta(seconds=10),
             )
 
@@ -141,7 +141,7 @@ class NetworkChangeWorkflow:
             )
             await workflow.execute_activity(
                 update_device_status,
-                args=[device_hostname, "failed"],
+                args=[device_hostname, "maintenance"],
                 start_to_close_timeout=timedelta(seconds=10),
             )
             raise RuntimeError(f"Validation failed, rolled back: {e!s}") from e
