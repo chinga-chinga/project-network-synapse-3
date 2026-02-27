@@ -18,6 +18,9 @@ uv sync --all-groups
 # Install pre-commit hooks
 uv run pre-commit install
 
+# Install pre-push hook (blocks direct pushes to main/develop)
+ln -sf ../../.githooks/pre-push .git/hooks/pre-push
+
 # Verify setup
 uv run invoke backend.test-unit
 ```
