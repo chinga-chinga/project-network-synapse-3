@@ -11,6 +11,36 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # Issue link check — enforce Closes/Fixes/Resolves #N in PR body
+  # ---------------------------------------------------------------------------
+  issue-link-check:
+    name: Issue Link Check
+    runs-on: ubuntu-latest
+    permissions: {}
+    if: >-
+      !startsWith(github.head_ref, 'dependabot/') &&
+      !(github.event.pull_request.base.ref == 'main' &&
+      (github.head_ref == 'develop' || startsWith(github.head_ref, 'release/')))
+    steps:
+      - name: Check PR body for issue reference
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if echo "$PR_BODY" | grep -iqE '\b(closes|fixes|resolves)\b\s+#[0-9]+'; then
+            echo "✅ PR body contains an issue reference."
+          else
+            echo "❌ PR body must include 'Closes #<issue-number>' to link this PR to an issue."
+            echo ""
+            echo "Add one of the following to your PR description:"
+            echo "  Closes #123"
+            echo "  Fixes #123"
+            echo "  Resolves #123"
+            echo ""
+            echo "This ensures the PR appears in the 'Linked pull requests' column on the project board."
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
   # Detect which files changed to conditionally run jobs
   # ---------------------------------------------------------------------------
   changes:
@@ -268,7 +298,7 @@ jobs:
   pr-summary:
     name: PR Summary
     runs-on: ubuntu-latest
-    needs: [code-quality, security-scanning, secrets-detection, unit-tests, uv-lock-check]
+    needs: [issue-link-check, code-quality, security-scanning, secrets-detection, unit-tests, uv-lock-check]
     if: always()
     steps:
       - name: Check job results
@@ -277,6 +307,7 @@ jobs:
           echo ""
           echo "| Job | Status |"
           echo "|-----|--------|"
+          echo "| Issue Link Check | ${{ needs.issue-link-check.result }} |"
           echo "| Code Quality | ${{ needs.code-quality.result }} |"
           echo "| Security Scanning | ${{ needs.security-scanning.result }} |"
           echo "| Secrets Detection | ${{ needs.secrets-detection.result }} |"
@@ -284,7 +315,8 @@ jobs:
           echo "| uv Lock Check | ${{ needs.uv-lock-check.result }} |"
           echo ""
 
-          if [[ "${{ needs.code-quality.result }}" == "failure" ]] || \
+          if [[ "${{ needs.issue-link-check.result }}" == "failure" ]] || \
+             [[ "${{ needs.code-quality.result }}" == "failure" ]] || \
              [[ "${{ needs.secrets-detection.result }}" == "failure" ]] || \
              [[ "${{ needs.unit-tests.result }}" == "failure" ]] || \
              [[ "${{ needs.uv-lock-check.result }}" == "failure" ]]; then
