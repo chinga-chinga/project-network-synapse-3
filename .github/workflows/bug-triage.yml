@@ -15,7 +15,7 @@ jobs:
           script: |
             // Check if the issue has the "bug" label (from bug_report.yml template)
             const labels = context.payload.issue.labels.map(l => l.name);
-            
+
             if (labels.includes('bug')) {
               // Add a "triage" label so maintainers know it's unreviewed
               await github.rest.issues.addLabels({
@@ -24,12 +24,18 @@ jobs:
                 issue_number: context.issue.number,
                 labels: ['triage']
               });
-              
+
               // Optionally add a welcome/triage comment
+              const msg = "👋 Thanks for reporting this bug!\n\n" +
+                "It has been automatically marked for `triage`. " +
+                "A maintainer will review it shortly. In the meantime, " +
+                "please ensure your description includes **Steps to Reproduce** " +
+                "and **Environment Details**.";
+
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body: "👋 Thanks for reporting this bug!\n\nIt has been automatically marked for `triage`. A maintainer will review it shortly. In the meantime, please ensure your description includes **Steps to Reproduce** and **Environment Details**."
+                body: msg
               });
             }
