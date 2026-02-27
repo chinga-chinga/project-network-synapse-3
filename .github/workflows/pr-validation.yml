@@ -16,6 +16,7 @@ jobs:
   issue-link-check:
     name: Issue Link Check
     runs-on: ubuntu-latest
+    permissions: {}
     if: >-
       github.event.pull_request.base.ref != 'main'
       && !startsWith(github.head_ref, 'dependabot/')
@@ -24,7 +25,7 @@ jobs:
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          if echo "$PR_BODY" | grep -iqE '(closes|fixes|resolves)\s+#[0-9]+'; then
+          if echo "$PR_BODY" | grep -iqE '\b(closes|fixes|resolves)\b\s+#[0-9]+'; then
             echo "✅ PR body contains an issue reference."
           else
             echo "❌ PR body must include 'Closes #<issue-number>' to link this PR to an issue."
