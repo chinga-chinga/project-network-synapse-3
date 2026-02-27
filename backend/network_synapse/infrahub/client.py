@@ -171,7 +171,8 @@ class InfrahubConfigClient:
         url: str | None = None,
         token: str | None = None,
     ) -> None:
-        self.url = (url or os.getenv("INFRAHUB_URL", "http://localhost:8000")).rstrip("/")
+        resolved_url = url or os.getenv("INFRAHUB_URL") or "http://localhost:8000"
+        self.url = resolved_url.rstrip("/")
         self.token = token or os.getenv("INFRAHUB_TOKEN", "")
         self._client: httpx.Client | None = None
         self._authenticated = False
@@ -239,7 +240,8 @@ class InfrahubConfigClient:
             error_msgs = [e.get("message", str(e)) for e in data["errors"]]
             raise RuntimeError(f"GraphQL errors: {'; '.join(error_msgs)}")
 
-        return data.get("data", {})
+        result: dict[str, Any] = data.get("data", {})
+        return result
 
     # -- query methods --
 

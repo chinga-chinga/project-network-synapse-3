@@ -125,6 +125,28 @@ As each sub-task is completed, **edit the issue body and tick the checkbox** so 
 
 > For full details, see [Issue Management](./issue-management.md).
 
+## Git Hooks
+
+Local hooks enforce GitFlow rules before code leaves your machine.
+
+### Pre-commit hooks (via `pre-commit`)
+
+Installed with `uv run pre-commit install`. Runs on every commit:
+
+- Linting and formatting (ruff)
+- Secret detection (detect-secrets, gitleaks)
+- **Branch protection** — blocks commits directly to `main` or `develop`
+
+### Pre-push hook
+
+Blocks `git push` directly to `main` or `develop`. Install with:
+
+```bash
+ln -sf ../../.githooks/pre-push .git/hooks/pre-push
+```
+
+The hook is stored in `.githooks/pre-push` (version-controlled). It ensures all changes go through Pull Requests, even if GitHub branch protection is misconfigured.
+
 ## Agent-Specific Rules
 
 > **AI agents MUST always use this workflow. No exceptions.**

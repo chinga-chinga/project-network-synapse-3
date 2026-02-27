@@ -20,6 +20,7 @@ from network_synapse.infrahub.client import (
     DeviceNotFoundError,
     InfrahubConfigClient,
 )
+from network_synapse.infrahub.models import DeviceData
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -168,8 +169,6 @@ class TestUpdateDeviceStatusActivity:
             patch("synapse_workers.activities.infrahub_activities.activity") as mock_activity,
         ):
             mock_client = mock_cls.return_value
-            from network_synapse.infrahub.models import DeviceData
-
             mock_client.update_device_status.return_value = DeviceData(
                 id="device-spine01-id",
                 name="spine01",
