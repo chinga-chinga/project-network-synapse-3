@@ -14,6 +14,8 @@ Step-by-step guide to start the Temporal worker and execute a network change wor
 
 ## Step 1: Deploy the Project to the VM
 
+> **Note:** If you want to run `NetworkChangeWorkflow` end-to-end, your worker **must** be able to reach the `172.20.20.x` Containerlab node IP addresses. Usually this means starting the worker on the GCP VM itself, or setting up Tailscale Subnet Routing to advertise the `172.20.20.0/24` network.
+
 ```bash
 # SSH into the VM
 gcloud compute ssh synapse-vm-01 --zone=us-central1-a

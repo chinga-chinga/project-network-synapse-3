@@ -49,7 +49,7 @@ def test_infrahub_device_config_retrieval():
         assert config is not None
 
         bgp_vars = config.to_bgp_template_vars()
-        assert bgp_vars.local_as > 0
+        assert bgp_vars.local_asn > 0
 
         iface_vars = config.to_interface_template_vars()
         assert len(iface_vars.interfaces) > 0
