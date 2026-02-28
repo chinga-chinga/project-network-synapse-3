@@ -1,0 +1,85 @@
+# Issue close guard — prevent premature issue closure
+#
+# If an issue is closed while it still has an open (unmerged) PR linked via
+# "Closes #N" / "Fixes #N" / "Resolves #N", this workflow will reopen the
+# issue and leave an explanatory comment.
+#
+# Rationale: Issues should only transition to "Done" when the associated PR
+# merges into develop.  See dev/guidelines/issue-management.md.
+
+name: Issue Close Guard
+
+on:
+  issues:
+    types: [closed]
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  guard:
+    name: Check for unmerged linked PRs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Look for open PRs that close this issue
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Search open PRs whose body references this issue
+          PATTERN="(?i)(closes|fixes|resolves)\\\\s+#${ISSUE_NUMBER}\\\\b"
+          JQ_EXPR="[.[] | select(.body | test(\"$PATTERN\"))] | length"
+          OPEN_PRS=$(gh pr list \
+            --repo "$REPO" \
+            --state open \
+            --json number,body,title \
+            --jq "$JQ_EXPR")
+
+          echo "open_prs=$OPEN_PRS" >> "$GITHUB_OUTPUT"
+
+          if [ "$OPEN_PRS" -gt 0 ]; then
+            echo "⚠️  Found $OPEN_PRS open PR(s) linked to issue #${ISSUE_NUMBER}."
+            PATTERN="(?i)(closes|fixes|resolves)\\\\s+#${ISSUE_NUMBER}\\\\b"
+            FILTER="[.[] | select(.body | test(\"$PATTERN\"))]"
+            FORMAT="map(\"- #\\(.number) — \\(.title)\") | join(\"\\n\")"
+            PR_LIST=$(gh pr list \
+              --repo "$REPO" \
+              --state open \
+              --json number,title,body \
+              --jq "$FILTER | $FORMAT")
+            echo "pr_list<<EOF" >> "$GITHUB_OUTPUT"
+            echo "$PR_LIST" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          else
+            echo "✅  No open PRs linked — issue can stay closed."
+          fi
+
+      - name: Reopen issue and comment
+        if: steps.check.outputs.open_prs != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+          PR_LIST: ${{ steps.check.outputs.pr_list }}
+        run: |
+          gh issue reopen "$ISSUE_NUMBER" --repo "$REPO"
+
+          COMMENT_BODY=$(cat <<COMMENT
+          🔄 **Issue reopened automatically.**
+
+          This issue was closed while it still has unmerged PR(s) linked to it:
+
+          ${PR_LIST}
+
+          Per our [issue management guidelines](dev/guidelines/issue-management.md),
+          issues should only be closed by merging the associated PR
+          into \`develop\` — never manually.
+
+          > _This check is enforced by the Issue Close Guard workflow._
+          COMMENT
+          )
+
+          gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body "$COMMENT_BODY"

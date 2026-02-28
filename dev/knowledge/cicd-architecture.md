@@ -587,6 +587,8 @@ All templates share a component dropdown: Backend, Workers, CI/CD, Docker/Infras
 | `ci.yml` | Push to develop | Post-merge validation + integration tests |
 | `deploy.yml` | Manual dispatch | Deploy to dev/staging/prod |
 | `build-artifacts.yml` | Push tag `v*` | Docker build + package build |
+| `bug-triage.yml` | Issue opened | Auto-label bug reports with `triage` |
+| `issue-close-guard.yml` | Issue closed | Reopen if unmerged PR still linked |
 
 Shared environment:
 
@@ -672,7 +674,26 @@ Triggered on tags matching `v*`:
 - **build-docker** -- Uses `docker/setup-buildx-action`, builds from `development/Dockerfile`
 - **build-package** -- `uv build --package <name>` for each workspace package, uploads `dist/` as artifact
 
-### 9.7 Pinned Action Versions
+### 9.7 Bug Triage (Issue Opened)
+
+Triggers when a new issue is opened. If the issue was created from the Bug Report template, the workflow:
+
+- Adds the `triage` label to flag it for maintainer review.
+- Posts an automated welcome comment acknowledging the report.
+
+### 9.8 Issue Close Guard (Issue Closed)
+
+Triggers whenever an issue is closed. Prevents premature manual closures by checking whether the issue still has open (unmerged) PRs linked via `Closes #N` / `Fixes #N` / `Resolves #N`.
+
+**Behavior:**
+
+- Searches all open PRs for closing keyword references to the closed issue.
+- If an unmerged PR is found, **reopens the issue** and leaves a comment listing the linked PR(s) with a pointer to the issue management guidelines.
+- If no open PRs reference the issue, the closure stands.
+
+This enforces the policy documented in `dev/guidelines/issue-management.md`: issues must only be closed by merging their associated PR into `develop`.
+
+### 9.9 Pinned Action Versions
 
 | Action | Version |
 |--------|---------|

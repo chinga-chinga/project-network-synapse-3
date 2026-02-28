@@ -89,6 +89,16 @@ As you commit work that completes a sub-task, edit the issue body and tick the c
 
 This gives anyone viewing the issue a real-time progress picture without needing to read commit history.
 
+## Automated Guardrails
+
+The **Issue Close Guard** workflow (`.github/workflows/issue-close-guard.yml`) enforces the rule that issues must only be closed via PR merge:
+
+- Triggers whenever an issue is closed.
+- Checks for any open (unmerged) PRs that reference the issue with `Closes #N` / `Fixes #N` / `Resolves #N`.
+- If an unmerged PR is found, the workflow **reopens the issue** and leaves a comment explaining why.
+
+This prevents accidental or premature manual closures.
+
 ## Agent Rules
 
 > **AI agents MUST follow these rules when working on issues.**
