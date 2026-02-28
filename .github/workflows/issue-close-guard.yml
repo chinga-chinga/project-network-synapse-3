@@ -29,22 +29,27 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
         run: |
-          # Search open PRs whose body references this issue with a closing keyword
+          # Search open PRs whose body references this issue
+          PATTERN="(?i)(closes|fixes|resolves)\\\\s+#${ISSUE_NUMBER}\\\\b"
+          JQ_EXPR="[.[] | select(.body | test(\"$PATTERN\"))] | length"
           OPEN_PRS=$(gh pr list \
             --repo "$REPO" \
             --state open \
             --json number,body,title \
-            --jq "[.[] | select(.body | test(\"(?i)(closes|fixes|resolves)\\\\s+#${ISSUE_NUMBER}\\\\b\"))] | length")
+            --jq "$JQ_EXPR")
 
           echo "open_prs=$OPEN_PRS" >> "$GITHUB_OUTPUT"
 
           if [ "$OPEN_PRS" -gt 0 ]; then
             echo "⚠️  Found $OPEN_PRS open PR(s) linked to issue #${ISSUE_NUMBER}."
+            PATTERN="(?i)(closes|fixes|resolves)\\\\s+#${ISSUE_NUMBER}\\\\b"
+            FILTER="[.[] | select(.body | test(\"$PATTERN\"))]"
+            FORMAT="map(\"- #\\(.number) — \\(.title)\") | join(\"\\n\")"
             PR_LIST=$(gh pr list \
               --repo "$REPO" \
               --state open \
               --json number,title,body \
-              --jq "[.[] | select(.body | test(\"(?i)(closes|fixes|resolves)\\\\s+#${ISSUE_NUMBER}\\\\b\"))] | map(\"- #\\(.number) — \\(.title)\") | join(\"\\n\")")
+              --jq "$FILTER | $FORMAT")
             echo "pr_list<<EOF" >> "$GITHUB_OUTPUT"
             echo "$PR_LIST" >> "$GITHUB_OUTPUT"
             echo "EOF" >> "$GITHUB_OUTPUT"
@@ -69,7 +74,9 @@ jobs:
 
           ${PR_LIST}
 
-          Per our [issue management guidelines](dev/guidelines/issue-management.md), issues should only be closed by merging the associated PR into \`develop\` — never manually.
+          Per our [issue management guidelines](dev/guidelines/issue-management.md),
+          issues should only be closed by merging the associated PR
+          into \`develop\` — never manually.
 
           > _This check is enforced by the Issue Close Guard workflow._
           COMMENT
