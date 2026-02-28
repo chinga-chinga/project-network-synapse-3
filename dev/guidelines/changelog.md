@@ -46,3 +46,13 @@ uv run towncrier build --version 0.2.0
 - CI/CD updates
 - Documentation-only changes
 - Test-only changes
+
+## PR Enforcement
+
+CI automatically blocks PRs that don't include a changelog fragment. If your PR doesn't need one (CI-only, docs-only, test-only, or internal refactoring), ask a maintainer to add the `skip-changelog` label to skip the check.
+
+The check runs on every PR to `main` and `develop`. It is automatically skipped for:
+
+- Dependabot PRs
+- Release PRs (`develop` → `main` or `release/*` → `main`)
+- PRs with the `skip-changelog` label

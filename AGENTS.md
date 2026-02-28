@@ -182,6 +182,8 @@ Uses Towncrier for changelog management. When making changes, add a fragment fil
 echo "Added BGP session validation workflow" > changelog/42.added.md
 ```
 
+CI enforces that every PR includes a changelog fragment. For PRs that don't need one (CI-only, docs-only, test-only, internal refactoring), add the `skip-changelog` label to skip the check.
+
 See `dev/guidelines/changelog.md` for details.
 
 ## Developer Documentation (dev/)
