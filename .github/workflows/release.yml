@@ -201,7 +201,7 @@ jobs:
           echo "Generating release notes for v${VERSION}..."
 
           NOTES=$(uv run towncrier build \
-            --draft --version "$VERSION" 2>/dev/null)
+            --draft --version "$VERSION")
 
           echo "notes<<RELEASE_NOTES_EOF" >> "$GITHUB_OUTPUT"
           echo "$NOTES" >> "$GITHUB_OUTPUT"
