@@ -88,6 +88,41 @@ git submodule update --init --recursive
 git submodule update --remote library/schema-library
 ```
 
+## Release Process
+
+Releases are automated via the `Release` workflow (`.github/workflows/release.yml`).
+
+### How to create a release
+
+1. Ensure all features for the release are merged to `develop`
+2. Create and merge a PR from `develop` → `main`
+3. Go to **Actions → Release → Run workflow**
+4. Enter the version number (e.g., `0.2.0`)
+5. The workflow automatically:
+   - Validates all closed issues have changelog fragments
+   - Compiles fragments into `CHANGELOG.md` via Towncrier
+   - Commits the updated changelog to `main`
+   - Creates and pushes a git tag (`v0.2.0`)
+   - Creates a GitHub Release with the generated notes
+   - Triggers the build-artifacts workflow (Docker + Python packages)
+
+### Completeness validation
+
+Before publishing, the workflow checks that every issue closed since the last release tag has a corresponding `changelog/<issue>.*.md` fragment. Issues labeled `duplicate`, `wontfix`, `question`, `invalid`, or `skip-changelog` are excluded from this check.
+
+If issues are missing fragments, the workflow fails with a list of gaps. Fix by adding the missing fragments or labeling the issues with `skip-changelog`.
+
+### Emergency releases
+
+Use the `skip-validation` checkbox when triggering the workflow to bypass the completeness check. Use sparingly.
+
+### One-time admin setup
+
+The workflow commits directly to `main`. Two things are needed:
+
+1. In **Settings → Rules → Rulesets → "Protect main"** → Bypass list, add **"Repository admin"** role (set to "Always")
+2. Create a Fine-grained PAT (Contents: Read/Write, scoped to this repo) and store it as the **`RELEASE_PAT`** secret in Settings → Secrets → Actions
+
 ## Deployment (GitOps)
 
 Deployment is **fully automated** via GitHub Actions.

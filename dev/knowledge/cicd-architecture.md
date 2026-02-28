@@ -587,6 +587,7 @@ All templates share a component dropdown: Backend, Workers, CI/CD, Docker/Infras
 | `ci.yml` | Push to develop | Post-merge validation + integration tests |
 | `deploy.yml` | Manual dispatch | Deploy to dev/staging/prod |
 | `build-artifacts.yml` | Push tag `v*` | Docker build + package build |
+| `release.yml` | Manual dispatch | Changelog build, tag, GitHub Release |
 | `bug-triage.yml` | Issue opened | Auto-label bug reports with `triage` |
 | `issue-close-guard.yml` | Issue closed | Reopen if unmerged PR still linked |
 
@@ -622,16 +623,18 @@ documentation:
 
 Jobs (in dependency order):
 
-1. **changes** -- Path detection using file-filters.yml (always runs)
-2. **code-quality** -- `ruff check .` + `ruff format --check .` + `mypy` (if python changed; mypy with continue-on-error)
-3. **yaml-lint** -- `yamllint .` (if yaml changed)
-4. **security-scanning** -- CodeQL analysis (if python changed)
-5. **secrets-detection** -- GitHub secret scanning (always runs via push protection)
-6. **uv-lock-check** -- `uv lock --check` (always runs)
-7. **unit-tests** -- `pytest tests/unit/` with coverage + Codecov upload + JUnit XML (if python changed)
-8. **labeler** -- Auto-label PRs based on file paths (always runs)
-9. **wiki-reminder** -- Comment on PR if workflow files changed (reminder to update docs)
-10. **pr-summary** -- Aggregation gate: checks results of all required jobs, fails if any failed
+1. **issue-link-check** -- Enforces `Closes/Fixes/Resolves #N` in PR body (skips dependabot + release PRs)
+2. **changelog-check** -- Enforces changelog fragment in PR (skips dependabot, release PRs, `skip-changelog` label)
+3. **changes** -- Path detection using file-filters.yml (always runs)
+4. **code-quality** -- `ruff check .` + `ruff format --check .` + `mypy` (if python changed; mypy with continue-on-error)
+5. **yaml-lint** -- `yamllint .` (if yaml changed)
+6. **security-scanning** -- CodeQL analysis (if python changed)
+7. **secrets-detection** -- GitHub secret scanning (always runs via push protection)
+8. **uv-lock-check** -- `uv lock --check` (always runs)
+9. **unit-tests** -- `pytest tests/unit/` with coverage + Codecov upload + JUnit XML (if python changed)
+10. **labeler** -- Auto-label PRs based on file paths (always runs)
+11. **wiki-reminder** -- Comment on PR if workflow files changed (reminder to update docs)
+12. **pr-summary** -- Aggregation gate: checks results of all required jobs, fails if any failed
 
 **Aggregation gate pattern:**
 
@@ -915,9 +918,15 @@ echo "Fixed schema loader timeout" > changelog/+fix-timeout.fixed.md
 
 **Add a fragment for:** User-facing changes, breaking changes, security fixes.
 
-**Skip for:** Internal refactoring, CI/CD updates, documentation-only changes, test-only changes.
+**Skip for:** Internal refactoring, CI/CD updates, documentation-only changes, test-only changes. Add the `skip-changelog` label to the PR to bypass the CI check.
 
-### 13.4 Building the Changelog
+### 13.4 PR Enforcement
+
+CI blocks PRs that don't include a changelog fragment (`changelog-check` job in `pr-validation.yml`). The check is skipped for dependabot PRs, release PRs (develop→main), and PRs with the `skip-changelog` label.
+
+### 13.5 Building the Changelog
+
+Changelog building is automated by the release workflow (`release.yml`). Manual building is still available:
 
 ```bash
 # Preview
@@ -931,15 +940,38 @@ uv run towncrier build --version X.Y.Z
 
 ## 14. Release Process
 
-1. All feature work merges to `develop` via PRs
+Releases are automated via the `Release` workflow (`.github/workflows/release.yml`), triggered manually via `workflow_dispatch`.
+
+### 14.1 Release Flow
+
+1. All feature work merges to `develop` via PRs (each PR must include a changelog fragment)
 2. CI runs on push to develop (unit + integration tests)
 3. When ready for release: create PR from `develop` to `main`
 4. PR validation runs with all gates including PR Summary
 5. Squash merge to main
-6. Create version tag: `git tag v<X.Y.Z> && git push --tags`
-7. `build-artifacts.yml` triggers: Docker build + package builds
-8. Build changelog: `uv run towncrier build --version X.Y.Z`
-9. Deploy via manual dispatch workflow (choose environment)
+6. Go to **Actions → Release → Run workflow**, enter version (e.g., `0.2.0`)
+7. The workflow automatically:
+   - Validates all closed issues since last tag have changelog fragments (completeness guard)
+   - Compiles fragments into `CHANGELOG.md` via Towncrier
+   - Commits the updated changelog to `main`
+   - Creates and pushes an annotated git tag (`v0.2.0`)
+   - Creates a GitHub Release with the generated notes
+   - Tag push triggers `build-artifacts.yml` (Docker + Python packages)
+8. Deploy via manual dispatch workflow (choose environment)
+
+### 14.2 Completeness Validation
+
+Before publishing, the release workflow checks that every issue closed since the last `v*` tag has a corresponding `changelog/<issue>.*.md` fragment. Issues labeled `duplicate`, `wontfix`, `question`, `invalid`, or `skip-changelog` are excluded. Orphan fragments (no matching closed issue) produce warnings but don't block the release.
+
+### 14.3 Emergency Releases
+
+Use the `skip-validation` checkbox when triggering the workflow to bypass the completeness check.
+
+### 14.4 Prerequisites
+
+The release workflow pushes directly to `main`. Requires:
+- "Repository admin" role in the "Protect main" ruleset bypass list (set to "Always")
+- A Fine-grained PAT (`RELEASE_PAT` secret) with Contents: Read/Write, scoped to this repo
 
 ---
 
