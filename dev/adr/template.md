@@ -22,7 +22,7 @@ What is the change that we're proposing and/or doing?
      Mermaid renders natively on GitHub. See https://mermaid.js.org for syntax.
      Example:
        flowchart LR
-           A["Component A"] - -> B["Component B"]
+           A["Component A"] --> B["Component B"]
 -->
 
 ## Consequences

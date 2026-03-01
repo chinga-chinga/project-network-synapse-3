@@ -14,7 +14,7 @@ case "${DEPLOY_BRANCH}" in
     ;;
 esac
 REMOTE_DIR="/home/${REMOTE_USER}/project-network-synapse-3"
-SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+SSH_OPTS=(-o StrictHostKeyChecking=no -o ConnectTimeout=10)
 
 echo "══════════════════════════════════════"
 echo "  Deploying to: ${REMOTE_HOST}"
@@ -24,7 +24,7 @@ echo "════════════════════════�
 
 # Step 1: Pull latest code
 echo "→ Pulling latest code..."
-ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
+ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" "
   export PATH=\$HOME/.local/bin:\$PATH
   cd ${REMOTE_DIR}
   git fetch origin
@@ -34,7 +34,7 @@ ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
 
 # Step 2: Install/update dependencies
 echo "→ Installing dependencies..."
-ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
+ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" "
   export PATH=\$HOME/.local/bin:\$PATH
   cd ${REMOTE_DIR}
   uv sync --all-groups
@@ -42,7 +42,7 @@ ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
 
 # Step 3: Restart the worker
 echo "→ Restarting synapse-worker service..."
-ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
+ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" "
   sudo systemctl restart synapse-worker
   sleep 3
   sudo systemctl is-active synapse-worker
@@ -50,7 +50,7 @@ ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
 
 # Step 4: Health check
 echo "→ Running health checks..."
-ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
+ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" "
   export PATH=\$HOME/.local/bin:\$PATH
   cd ${REMOTE_DIR}
 
