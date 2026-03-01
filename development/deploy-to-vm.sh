@@ -5,28 +5,36 @@ set -euo pipefail
 
 REMOTE_USER="${REMOTE_USER:-anton}"
 REMOTE_HOST="${REMOTE_HOST:?VM_HOST not set}"
+DEPLOY_BRANCH="${DEPLOY_BRANCH:?DEPLOY_BRANCH not set (expected origin/main or origin/develop)}"
+case "${DEPLOY_BRANCH}" in
+  origin/main|origin/develop) ;;
+  *)
+    echo "ERROR: Invalid DEPLOY_BRANCH '${DEPLOY_BRANCH}'. Allowed: origin/main, origin/develop" >&2
+    exit 1
+    ;;
+esac
 REMOTE_DIR="/home/${REMOTE_USER}/project-network-synapse-3"
-SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+SSH_OPTS=(-o StrictHostKeyChecking=no -o ConnectTimeout=10)
 
 echo "══════════════════════════════════════"
 echo "  Deploying to: ${REMOTE_HOST}"
-echo "  Branch:       ${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD)}"
+echo "  Deploy branch: ${DEPLOY_BRANCH}"
 echo "  Commit:       ${GITHUB_SHA:-$(git rev-parse --short HEAD)}"
 echo "══════════════════════════════════════"
 
 # Step 1: Pull latest code
 echo "→ Pulling latest code..."
-ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
+ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" "
   export PATH=\$HOME/.local/bin:\$PATH
   cd ${REMOTE_DIR}
   git fetch origin
-  git reset --hard origin/main
+  git reset --hard "${DEPLOY_BRANCH}"
   git submodule update --init --recursive
 "
 
 # Step 2: Install/update dependencies
 echo "→ Installing dependencies..."
-ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
+ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" "
   export PATH=\$HOME/.local/bin:\$PATH
   cd ${REMOTE_DIR}
   uv sync --all-groups
@@ -34,7 +42,7 @@ ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
 
 # Step 3: Restart the worker
 echo "→ Restarting synapse-worker service..."
-ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
+ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" "
   sudo systemctl restart synapse-worker
   sleep 3
   sudo systemctl is-active synapse-worker
@@ -42,7 +50,7 @@ ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
 
 # Step 4: Health check
 echo "→ Running health checks..."
-ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
+ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" "
   export PATH=\$HOME/.local/bin:\$PATH
   cd ${REMOTE_DIR}
 

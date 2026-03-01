@@ -17,13 +17,16 @@ on:
         required: false
         default: "main"
 
-  # Auto-deploy to staging on merge to main
+  # Auto-deploy: staging on develop push, prod on main push
   push:
-    branches: [main]
+    branches: [develop, main]
 
 concurrency:
-  group: deploy-${{ github.event.inputs.environment || 'staging' }}
+  group: deploy-${{ github.event.inputs.environment || (github.ref_name == 'main' && 'prod' || 'staging') }}
   cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   # ─────────────────────────────────────────────
@@ -42,6 +45,9 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "environment=${{ github.event.inputs.environment }}" >> "$GITHUB_OUTPUT"
             echo "ref=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.ref_name }}" = "main" ]; then
+            echo "environment=prod" >> "$GITHUB_OUTPUT"
+            echo "ref=${{ github.sha }}" >> "$GITHUB_OUTPUT"
           else
             echo "environment=staging" >> "$GITHUB_OUTPUT"
             echo "ref=${{ github.sha }}" >> "$GITHUB_OUTPUT"
@@ -88,33 +94,46 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
+      - name: Resolve deploy branch
+        id: branch
+        run: |
+          ENV="${{ needs.validate.outputs.deploy_env }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "name=${{ needs.validate.outputs.deploy_ref }}" >> "$GITHUB_OUTPUT"
+          elif [ "$ENV" = "prod" ]; then
+            echo "name=origin/main" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=origin/develop" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Deploy to VM
         env:
           REMOTE_HOST: ${{ secrets.VM_HOST }}
           REMOTE_USER: ${{ secrets.VM_USER || 'anton' }}
+          DEPLOY_BRANCH: ${{ steps.branch.outputs.name }}
         run: |
           SSH_KEY="$HOME/.ssh/deploy_key"
-          SSH_OPTS="-i $SSH_KEY -o StrictHostKeyChecking=no -o ConnectTimeout=15"
+          SSH_OPTS=(-i "$SSH_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=15)
 
           echo "══════════════════════════════════════"
           echo "  Deploying to: $REMOTE_HOST"
-          echo "  Ref:          ${{ needs.validate.outputs.deploy_ref }}"
+          echo "  Environment:  ${{ needs.validate.outputs.deploy_env }}"
+          echo "  Branch:       $DEPLOY_BRANCH"
           echo "══════════════════════════════════════"
 
           # Pull latest code
-          ssh $SSH_OPTS ${REMOTE_USER}@${REMOTE_HOST} "
-            export PATH=\$HOME/.local/bin:\$PATH
+          ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" bash -s -- "$DEPLOY_BRANCH" <<'REMOTE'
+            export PATH="$HOME/.local/bin:$PATH"
             cd ~/project-network-synapse-3
             git fetch origin
-            git reset --hard origin/main
+            git reset --hard "$1"
             git submodule update --init --recursive
             uv sync --all-groups
-          "
+          REMOTE
 
           # Restart the worker
-          ssh $SSH_OPTS ${REMOTE_USER}@${REMOTE_HOST} "
-            sudo systemctl restart synapse-worker
-          "
+          ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" \
+            "sudo systemctl restart synapse-worker"
 
           echo "Deployment complete"
 
@@ -138,11 +157,11 @@ jobs:
           REMOTE_USER: ${{ secrets.VM_USER || 'anton' }}
         run: |
           SSH_KEY="$HOME/.ssh/deploy_key"
-          SSH_OPTS="-i $SSH_KEY -o StrictHostKeyChecking=no -o ConnectTimeout=15"
+          SSH_OPTS=(-i "$SSH_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=15)
 
           echo "Running health checks..."
 
-          ssh $SSH_OPTS ${REMOTE_USER}@${REMOTE_HOST} "
+          ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" "
             # Worker is running
             sudo systemctl is-active synapse-worker && echo '✓ Worker active' || echo '✗ Worker down'
 
