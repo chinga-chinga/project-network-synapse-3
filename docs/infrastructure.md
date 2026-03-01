@@ -18,6 +18,7 @@ This document covers how to connect to all services running on the GCP VMs (prod
 > **Note:** Both VMs run identical service stacks. The staging VM tracks the `develop` branch
 > for pre-production validation. The sections below (Containerlab, Infrahub, Temporal, etc.)
 > apply to both VMs — substitute the VM name in SSH/gcloud commands as appropriate.
+> For staging local access, use the staging tunnel ports (9000, 9080, 59080) shown below.
 
 ---
 

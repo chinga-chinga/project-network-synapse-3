@@ -5,7 +5,14 @@ set -euo pipefail
 
 REMOTE_USER="${REMOTE_USER:-anton}"
 REMOTE_HOST="${REMOTE_HOST:?VM_HOST not set}"
-DEPLOY_BRANCH="${DEPLOY_BRANCH:-origin/main}"
+DEPLOY_BRANCH="${DEPLOY_BRANCH:?DEPLOY_BRANCH not set (expected origin/main or origin/develop)}"
+case "${DEPLOY_BRANCH}" in
+  origin/main|origin/develop) ;;
+  *)
+    echo "ERROR: Invalid DEPLOY_BRANCH '${DEPLOY_BRANCH}'. Allowed: origin/main, origin/develop" >&2
+    exit 1
+    ;;
+esac
 REMOTE_DIR="/home/${REMOTE_USER}/project-network-synapse-3"
 SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=10"
 
@@ -21,7 +28,7 @@ ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
   export PATH=\$HOME/.local/bin:\$PATH
   cd ${REMOTE_DIR}
   git fetch origin
-  git reset --hard ${DEPLOY_BRANCH}
+  git reset --hard "${DEPLOY_BRANCH}"
   git submodule update --init --recursive
 "
 

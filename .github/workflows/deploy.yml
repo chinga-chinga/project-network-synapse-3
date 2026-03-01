@@ -22,8 +22,11 @@ on:
     branches: [develop, main]
 
 concurrency:
-  group: deploy-${{ github.event.inputs.environment || 'staging' }}
+  group: deploy-${{ github.event.inputs.environment || (github.ref_name == 'main' && 'prod' || 'staging') }}
   cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   # ─────────────────────────────────────────────
@@ -95,7 +98,9 @@ jobs:
         id: branch
         run: |
           ENV="${{ needs.validate.outputs.deploy_env }}"
-          if [ "$ENV" = "prod" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "name=${{ needs.validate.outputs.deploy_ref }}" >> "$GITHUB_OUTPUT"
+          elif [ "$ENV" = "prod" ]; then
             echo "name=origin/main" >> "$GITHUB_OUTPUT"
           else
             echo "name=origin/develop" >> "$GITHUB_OUTPUT"
@@ -108,7 +113,7 @@ jobs:
           DEPLOY_BRANCH: ${{ steps.branch.outputs.name }}
         run: |
           SSH_KEY="$HOME/.ssh/deploy_key"
-          SSH_OPTS="-i $SSH_KEY -o StrictHostKeyChecking=no -o ConnectTimeout=15"
+          SSH_OPTS=(-i "$SSH_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=15)
 
           echo "══════════════════════════════════════"
           echo "  Deploying to: $REMOTE_HOST"
@@ -117,19 +122,18 @@ jobs:
           echo "══════════════════════════════════════"
 
           # Pull latest code
-          ssh $SSH_OPTS ${REMOTE_USER}@${REMOTE_HOST} "
-            export PATH=\$HOME/.local/bin:\$PATH
+          ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" bash -s -- "$DEPLOY_BRANCH" <<'REMOTE'
+            export PATH="$HOME/.local/bin:$PATH"
             cd ~/project-network-synapse-3
             git fetch origin
-            git reset --hard ${DEPLOY_BRANCH}
+            git reset --hard "$1"
             git submodule update --init --recursive
             uv sync --all-groups
-          "
+          REMOTE
 
           # Restart the worker
-          ssh $SSH_OPTS ${REMOTE_USER}@${REMOTE_HOST} "
-            sudo systemctl restart synapse-worker
-          "
+          ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" \
+            "sudo systemctl restart synapse-worker"
 
           echo "Deployment complete"
 
@@ -153,11 +157,11 @@ jobs:
           REMOTE_USER: ${{ secrets.VM_USER || 'anton' }}
         run: |
           SSH_KEY="$HOME/.ssh/deploy_key"
-          SSH_OPTS="-i $SSH_KEY -o StrictHostKeyChecking=no -o ConnectTimeout=15"
+          SSH_OPTS=(-i "$SSH_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=15)
 
           echo "Running health checks..."
 
-          ssh $SSH_OPTS ${REMOTE_USER}@${REMOTE_HOST} "
+          ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" "
             # Worker is running
             sudo systemctl is-active synapse-worker && echo '✓ Worker active' || echo '✗ Worker down'
 
