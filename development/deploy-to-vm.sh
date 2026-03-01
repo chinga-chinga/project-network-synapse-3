@@ -5,12 +5,13 @@ set -euo pipefail
 
 REMOTE_USER="${REMOTE_USER:-anton}"
 REMOTE_HOST="${REMOTE_HOST:?VM_HOST not set}"
+DEPLOY_BRANCH="${DEPLOY_BRANCH:-origin/main}"
 REMOTE_DIR="/home/${REMOTE_USER}/project-network-synapse-3"
 SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=10"
 
 echo "══════════════════════════════════════"
 echo "  Deploying to: ${REMOTE_HOST}"
-echo "  Branch:       ${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD)}"
+echo "  Deploy branch: ${DEPLOY_BRANCH}"
 echo "  Commit:       ${GITHUB_SHA:-$(git rev-parse --short HEAD)}"
 echo "══════════════════════════════════════"
 
@@ -20,7 +21,7 @@ ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "
   export PATH=\$HOME/.local/bin:\$PATH
   cd ${REMOTE_DIR}
   git fetch origin
-  git reset --hard origin/main
+  git reset --hard ${DEPLOY_BRANCH}
   git submodule update --init --recursive
 "
 

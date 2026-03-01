@@ -16,6 +16,17 @@ What is the issue that we're seeing that is motivating this decision or change?
 
 What is the change that we're proposing and/or doing?
 
+### Diagram
+
+<!-- Optional: Include a Mermaid diagram to visualize the decision where applicable.
+     Mermaid renders natively on GitHub. See https://mermaid.js.org for syntax.
+
+```mermaid
+flowchart LR
+    A["Component A"] --> B["Component B"]
+```
+-->
+
 ## Consequences
 
 ### Positive

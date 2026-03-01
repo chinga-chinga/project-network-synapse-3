@@ -1,8 +1,29 @@
 # Infrastructure Connection Guide
 
-This document covers how to connect to all services running on the GCP VM (`synapse-vm-01`).
+This document covers how to connect to all services running on the GCP VMs (production and staging).
 
-## VM Access
+## VM Overview
+
+| Property | Production | Staging |
+|----------|-----------|---------|
+| **VM Name** | `synapse-vm-01` | `synapse-staging-vm` |
+| **Machine Type** | e2-standard-4 (4 vCPU, 16GB) | e2-standard-4 (4 vCPU, 16GB) |
+| **OS** | Debian 12 | Debian 12 |
+| **Zone** | us-central1-a | us-central1-a |
+| **GCP Project** | `project-network-synapse` | `project-network-synapse` |
+| **Repo Path** | `/home/anton/project-network-synapse-3` | `/home/anton/project-network-synapse-3` |
+| **Branch** | `main` | `develop` |
+| **Services** | Infrahub, Temporal, Containerlab, synapse-worker | Infrahub, Temporal, Containerlab, synapse-worker |
+
+> **Note:** Both VMs run identical service stacks. The staging VM tracks the `develop` branch
+> for pre-production validation. The sections below (Containerlab, Infrahub, Temporal, etc.)
+> apply to both VMs — substitute the VM name in SSH/gcloud commands as appropriate.
+
+---
+
+## Production VM — synapse-vm-01
+
+### VM Access
 
 **GCP VM:** `synapse-vm-01` (e2-standard-4, us-central1-a, Debian 12, 16GB RAM)
 
@@ -32,6 +53,43 @@ Then open:
 | Infrahub UI | http://localhost:8000 |
 | Temporal UI | http://localhost:8080 |
 | Containerlab Graph | http://localhost:50080 |
+
+---
+
+## Staging VM — synapse-staging-vm
+
+**GCP VM:** `synapse-staging-vm` (e2-standard-4, us-central1-a, Debian 12, 16GB RAM)
+
+**Branch:** `develop` (auto-deployed on push to `develop`)
+
+### VM Access
+
+```bash
+# SSH via gcloud
+gcloud compute ssh synapse-staging-vm --zone=us-central1-a
+```
+
+### All-in-One SSH Tunnel
+
+Forward all web UIs to your laptop in a single command:
+
+```bash
+gcloud compute ssh synapse-staging-vm --zone=us-central1-a -- \
+  -L 9000:localhost:8000 \
+  -L 9080:localhost:8080 \
+  -L 59080:localhost:50080
+```
+
+Then open:
+
+| Service | Local URL |
+|---------|-----------|
+| Infrahub UI | http://localhost:9000 |
+| Temporal UI | http://localhost:9080 |
+| Containerlab Graph | http://localhost:59080 |
+
+> **Tip:** Staging uses different local ports (9000, 9080, 59080) so you can tunnel to both
+> production and staging simultaneously without port conflicts.
 
 ---
 
